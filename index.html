@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROTOCOL 12 TERMINAL ACCESS</title>
     <style>
+        /* 233450836245523 */
         * {
             margin: 0;
             padding: 0;
@@ -35,6 +36,102 @@
             overflow: hidden;
         }
         
+        /* 2346823043892 */
+        .security-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #0f0;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .hack-terminal {
+            flex-grow: 1;
+            background-color: #000;
+            border: 1px solid #0f0;
+            padding: 20px;
+            margin: 10px 0;
+            overflow-y: auto;
+        }
+        
+        .hack-output {
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .hack-prompt {
+            display: flex;
+            align-items: center;
+        }
+        
+        .hack-input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+            caret-color: #0f0;
+        }
+        
+        .password-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #0f0;
+        }
+        
+        .password-option {
+            padding: 8px;
+            background: #002200;
+            border: 1px solid #0f0;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .password-option:hover {
+            background: #004400;
+        }
+        
+        .password-option.correct {
+            background: #004400;
+            border-color: #0f0;
+            color: #0f0;
+        }
+        
+        .password-option.incorrect {
+            background: #440000;
+            border-color: #f00;
+            color: #f00;
+        }
+        
+        .attempts-counter {
+            color: #ff0;
+            margin: 10px 0;
+        }
+        
+        .security-alert {
+            color: #f00;
+            animation: blink-alert 0.5s infinite;
+        }
+        
+        @keyframes blink-alert {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Остальные стили остаются без изменений */
         .header {
             padding: 15px;
             display: flex;
@@ -170,18 +267,29 @@
             background-color: #c0cff0;
             margin-left: 2px;
             vertical-align: middle;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
         
         .response {
             margin-top: 10px;
             padding-left: 15px;
             border-left: 1px solid #1a3a8f;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease-out forwards;
         }
         
         .response-title {
             color: #2a52be;
             margin-bottom: 10px;
             font-weight: bold;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.2s forwards;
         }
         
         .document {
@@ -190,6 +298,9 @@
             padding: 15px;
             margin: 10px 0;
             font-size: 0.95rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInLeft 0.5s ease-out 0.3s forwards;
         }
         
         .classified {
@@ -198,6 +309,9 @@
             padding: 10px;
             margin: 10px 0;
             font-size: 0.9rem;
+            opacity: 0;
+            transform: scale(0.95);
+            animation: scaleIn 0.4s ease-out 0.4s forwards;
         }
         
         .system-info {
@@ -206,15 +320,360 @@
             border-top: 1px solid #1a3a8f;
             color: #6b7aa0;
             font-size: 0.85rem;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.6s forwards;
+        }
+        
+        .command-list {
+            background-color: rgba(26, 58, 143, 0.1);
+            border: 1px solid #1a3a8f;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 0.95rem;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.5s ease-out 0.2s forwards;
+        }
+        
+        .command-item {
+            margin: 5px 0;
+            color: #c0cff0;
+            opacity: 0;
+            transform: translateX(-10px);
+            animation: slideInLeft 0.4s ease-out forwards;
+        }
+        
+        .command-item:nth-child(1) { animation-delay: 0.3s; }
+        .command-item:nth-child(2) { animation-delay: 0.4s; }
+        .command-item:nth-child(3) { animation-delay: 0.5s; }
+        .command-item:nth-child(4) { animation-delay: 0.6s; }
+        .command-item:nth-child(5) { animation-delay: 0.7s; }
+        .command-item:nth-child(6) { animation-delay: 0.8s; }
+        .command-item:nth-child(7) { animation-delay: 0.9s; }
+        .command-item:nth-child(8) { animation-delay: 1.0s; }
+        
+        .audio-log {
+            background-color: rgba(40, 40, 80, 0.2);
+            border: 1px solid #2a52be;
+            padding: 15px;
+            margin: 10px 0;
+            font-style: italic;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 0.3s forwards;
+        }
+        
+        .audio-log-title {
+            color: #4a72d0;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .dialogue {
+            margin: 8px 0;
+            padding-left: 10px;
+        }
+        
+        .dialogue-speaker {
+            color: #c0cff0;
+            font-weight: bold;
+        }
+        
+        .alert-message {
+            background-color: rgba(139, 0, 0, 0.2);
+            border: 1px solid #800;
+            padding: 12px;
+            margin: 10px 0;
+            color: #e88;
+            font-weight: bold;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.3s forwards;
+        }
+        
+        .alert-stats {
+            background-color: rgba(100, 0, 0, 0.2);
+            border-left: 3px solid #800;
+            padding: 10px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+            opacity: 0;
+            animation: slideInLeft 0.4s ease-out 0.4s forwards;
+        }
+        
+        .corrupted-text {
+            color: #f55;
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        
+        .report {
+            background-color: rgba(26, 58, 143, 0.2);
+            border: 1px solid #2a52be;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.3s forwards;
+        }
+        
+        .sound-control {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(26, 58, 143, 0.5);
+            border: 1px solid #2a52be;
+            color: #c0cff0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+        
+        .sound-control:hover {
+            background: rgba(26, 58, 143, 0.7);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ========== Z28013Y816 ========== */
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.3);
+            animation: scan 8s linear infinite;
+            z-index: 999;
+            pointer-events: none;
+            display: none;
+        }
+        
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        
+        .static-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.05;
+            animation: static 0.1s infinite;
+            display: none;
+        }
+        
+        @keyframes static {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-5px, -5px); }
+        }
+        
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+        
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00ff;
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00ffff;
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+        
+        @keyframes glitch-anim {
+            0% { clip: rect(42px, 9999px, 44px, 0); }
+            5% { clip: rect(12px, 9999px, 59px, 0); }
+            10% { clip: rect(48px, 9999px, 29px, 0); }
+            15.9% { clip: rect(42px, 9999px, 73px, 0); }
+            20% { clip: rect(63px, 9999px, 27px, 0); }
+            25% { clip: rect(34px, 9999px, 55px, 0); }
+            30% { clip: rect(86px, 9999px, 73px, 0); }
+            35% { clip: rect(20px, 9999px, 20px, 0); }
+            40% { clip: rect(26px, 9999px, 60px, 0); }
+            45% { clip: rect(25px, 9999px, 66px, 0); }
+            50% { clip: rect(57px, 9999px, 98px, 0); }
+            55% { clip: rect(5px, 9999px, 46px, 0); }
+            60% { clip: rect(82px, 9999px, 31px, 0); }
+            65% { clip: rect(54px, 9999px, 27px, 0); }
+            70% { clip: rect(28px, 9999px, 99px, 0); }
+            75% { clip: rect(45px, 9999px, 69px, 0); }
+            80% { clip: rect(23px, 9999px, 85px, 0); }
+            85% { clip: rect(54px, 9999px, 84px, 0); }
+            90% { clip: rect(45px, 9999px, 47px, 0); }
+            95% { clip: rect(37px, 9999px, 20px, 0); }
+            100% { clip: rect(4px, 9999px, 91px, 0); }
+        }
+        
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            5% { clip: rect(52px, 9999px, 74px, 0); }
+            10% { clip: rect(79px, 9999px, 85px, 0); }
+            15% { clip: rect(75px, 9999px, 5px, 0); }
+            20% { clip: rect(67px, 9999px, 61px, 0); }
+            25% { clip: rect(14px, 9999px, 79px, 0); }
+            30% { clip: rect(1px, 9999px, 66px, 0); }
+            35% { clip: rect(86px, 9999px, 30px, 0); }
+            40% { clip: rect(23px, 9999px, 98px, 0); }
+            45% { clip: rect(85px, 9999px, 72px, 0); }
+            50% { clip: rect(71px, 9999px, 75px, 0); }
+            55% { clip: rect(2px, 9999px, 48px, 0); }
+            60% { clip: rect(30px, 9999px, 16px, 0); }
+            65% { clip: rect(59px, 9999px, 50px, 0); }
+            70% { clip: rect(41px, 9999px, 62px, 0); }
+            75% { clip: rect(2px, 9999px, 82px, 0); }
+            80% { clip: rect(47px, 9999px, 73px, 0); }
+            85% { clip: rect(3px, 9999px, 27px, 0); }
+            90% { clip: rect(26px, 9999px, 55px, 0); }
+            95% { clip: rect(42px, 9999px, 97px, 0); }
+            100% { clip: rect(38px, 9999px, 49px, 0); }
+        }
+        
+        .flicker {
+            animation: flicker 0.1s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            5% { opacity: 0.2; }
+            10% { opacity: 0.9; }
+            15% { opacity: 0.1; }
+            20% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+        
+        .corruption {
+            color: #f55;
+            animation: corruption 2s infinite;
+            position: relative;
+        }
+        
+        @keyframes corruption {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; text-shadow: 0 0 5px #f00; }
+            100% { opacity: 1; }
+        }
+        
+        .pixelate {
+            image-rendering: pixelated;
+            filter: contrast(1.2) brightness(0.9);
         }
     </style>
 </head>
 <body>
+    <!-- Y234789236T2736029730 -->
+    <div class="scan-line" id="scan-line"></div>
+    <div class="static-overlay" id="static-overlay"></div>
+
+    <!-- 3729364T2342H234 -->
+    <div class="security-overlay" id="security-overlay">
+        <div class="hack-terminal">
+            <div class="hack-output" id="hack-output">
+                <div>PROTOCOL 12 SECURITY SYSTEM v3.7.4</div>
+                <div>UNAUTHORIZED ACCESS DETECTED</div>
+                <div>INITIATING COUNTERMEASURES...</div>
+                <div>================================</div>
+                <div>PASSWORD REQUIRED FOR SYSTEM ACCESS</div>
+                <div>ATTEMPTS REMAINING: <span id="attempts-count">4</span></div>
+                <div>================================</div>
+                <div>SELECT THE CORRECT PASSWORD:</div>
+            </div>
+            <div class="password-grid" id="password-grid">
+                <!-- TYFP27354097235 -->
+            </div>
+            <div class="attempts-counter" id="attempts-counter">
+                SECURITY LEVEL: MAXIMUM | LOCKOUT IMMINENT
+            </div>
+            <div class="security-alert" id="security-alert">
+                WARNING: UNAUTHORIZED ACCESS WILL BE REPORTED
+            </div>
+            <div class="hack-prompt">
+                <span>> </span>
+                <input type="text" class="hack-input" id="hack-input" placeholder="Type ADMIN_OVERRIDE for emergency access..." autofocus>
+            </div>
+        </div>
+    </div>
+
+    <button class="sound-control" id="sound-toggle">🔊 Sound ON</button>
+    
     <div class="container">
         <div class="header">
             <div class="logo"></div>
             <div class="header-text">
-                <h1>PROTOCOL 12</h1>
+                <!-- YB2375467792387023 -->
+                <h1 class="glitch-text" data-text="PROTOCOL 12">PROTOCOL 12</h1>
                 <p>SECURE TERMINAL ACCESS - LEVEL 9 CLEARANCE</p>
             </div>
             <div class="access-level">
@@ -225,11 +684,11 @@
         
         <div class="terminal">
             <div class="output" id="output">
-                <p>Initializing Protocol 12 terminal access...</p>
-                <p>System authentication complete. Security protocols enabled.</p>
-                <p>F.A.C.S. network status: OPERATIONAL</p>
-                <p>Last login: 2025-08-28 14:37:12 UTC</p>
-                <p>Enter command to access secure database.</p>
+                <p class="fade-in">Initializing Protocol 12 terminal access...</p>
+                <p class="fade-in-delayed">System authentication complete. Security protocols enabled.</p>
+                <p class="fade-in-delayed" style="animation-delay: 0.6s">F.A.C.S. network status: OPERATIONAL</p>
+                <p class="fade-in-delayed" style="animation-delay: 0.9s">Last login: <span class="timestamp" id="last-login-time"></span></p>
+                <p class="fade-in-delayed" style="animation-delay: 1.2s">Enter command to access secure database.</p>
                 <p>></p>
             </div>
             <div class="prompt">
@@ -241,35 +700,396 @@
         
         <div class="footer">
             <div>F.A.C.S. NODE: PRIME-ALPHA</div>
-            <div>TIMESTAMP: 2025-08-28T14:37:12Z</div>
+            <div>TIMESTAMP: <span class="timestamp" id="current-time"></span></div>
             <div>VERSION: 12.7.4</div>
         </div>
     </div>
 
     <script>
+        // ==================== ONLY SYSTEM ADMINS! ====================
+        
+        // HACK COMMAND!
+        const ADMIN_OVERRIDE_COMMAND = "ALPHA_OMEGA_BYPASS_789321";
+
         document.addEventListener('DOMContentLoaded', function() {
+            const securityOverlay = document.getElementById('security-overlay');
+            const hackOutput = document.getElementById('hack-output');
+            const passwordGrid = document.getElementById('password-grid');
+            const attemptsCount = document.getElementById('attempts-count');
+            const attemptsCounter = document.getElementById('attempts-counter');
+            const securityAlert = document.getElementById('security-alert');
+            const hackInput = document.getElementById('hack-input');
+            
             const output = document.getElementById('output');
             const commandInput = document.getElementById('command-input');
+            const currentTimeElement = document.getElementById('current-time');
+            const lastLoginTimeElement = document.getElementById('last-login-time');
+            const soundToggle = document.getElementById('sound-toggle');
+            const scanLine = document.getElementById('scan-line');
+            const staticOverlay = document.getElementById('static-overlay');
+            
+            let audioContext = null;
+            let soundEnabled = true;
+            let attemptsRemaining = 4;
+            let correctPassword = '';
+            let isSecurityActive = true;
+            let glitchInterval;
+
+            // ==================== YNROQ!2654124 ====================
+            
+            function initGlitchEffects() {
+                // NW234762394NT
+                scanLine.style.display = 'block';
+                staticOverlay.style.display = 'block';
+                
+                // HROUW6428974
+                setInterval(() => {
+                    if (Math.random() > 0.7 && !isSecurityActive) {
+                        document.body.classList.add('flicker');
+                        setTimeout(() => {
+                            document.body.classList.remove('flicker');
+                        }, 100);
+                    }
+                }, 5000);
+                
+                // HW73496572HG
+                glitchInterval = setInterval(() => {
+                    if (Math.random() > 0.8 && !isSecurityActive && output.children.length > 0) {
+                        const elements = output.querySelectorAll('p, .response, .document, .classified');
+                        if (elements.length > 0) {
+                            const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                            randomElement.classList.add('corruption');
+                            setTimeout(() => {
+                                randomElement.classList.remove('corruption');
+                            }, 800);
+                        }
+                    }
+                }, 6000);
+                
+                // HT1236240358H
+                setInterval(() => {
+                    if (Math.random() > 0.9 && !isSecurityActive) {
+                        staticOverlay.style.opacity = '0.1';
+                        setTimeout(() => {
+                            staticOverlay.style.opacity = '0.05';
+                        }, 100);
+                    }
+                }, 8000);
+            }
+
+            function disableGlitchEffects() {
+                clearInterval(glitchInterval);
+                scanLine.style.display = 'none';
+                staticOverlay.style.display = 'none';
+            }
+
+            // ==================== ONLY SYSTEM ADMINS! ====================
+
+            // HG28340235TY
+            function initSecuritySystem() {
+                if (isSecurityActive) {
+                    showSecurityOverlay();
+                    generatePasswordGame();
+                }
+            }
+
+            function showSecurityOverlay() {
+                securityOverlay.style.display = 'flex';
+                commandInput.disabled = true;
+                hackInput.focus();
+                disableGlitchEffects();
+            }
+
+            function hideSecurityOverlay() {
+                securityOverlay.style.display = 'none';
+                commandInput.disabled = false;
+                commandInput.focus();
+                initGlitchEffects();
+            }
+
+            function generatePasswordGame() {
+                passwordGrid.innerHTML = '';
+                const passwords = generatePasswords();
+                correctPassword = passwords.correct;
+                
+                passwords.all.forEach(password => {
+                    const option = document.createElement('div');
+                    option.className = 'password-option';
+                    option.textContent = password;
+                    option.addEventListener('click', () => checkPassword(password, option));
+                    passwordGrid.appendChild(option);
+                });
+                
+                updateAttemptsDisplay();
+            }
+
+            function generatePasswords() {
+                const wordList = [
+                    'QUANTUM', 'SILENCE', 'PROTOCOL', 'ANCHOR', 'FACS', 
+                    'OBJECT0', 'ANDERSON', 'PROMETHEUS', 'SECURITY', 'SYSTEM',
+                    'TERMINAL', 'ACCESS', 'CONTROL', 'BREACH', 'LOCKDOWN',
+                    'PASSWORD', 'ENCRYPT', 'DECODE', 'CYPHER', 'MATRIX'
+                ];
+                
+                const correct = wordList[Math.floor(Math.random() * wordList.length)];
+                const allPasswords = [correct];
+                
+                while (allPasswords.length < 12) {
+                    const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+                    if (!allPasswords.includes(randomWord)) {
+                        allPasswords.push(randomWord);
+                    }
+                }
+                
+                for (let i = allPasswords.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allPasswords[i], allPasswords[j]] = [allPasswords[j], allPasswords[i]];
+                }
+                
+                return { correct, all: allPasswords };
+            }
+
+            function checkPassword(password, element) {
+                if (password === correctPassword) {
+                    element.classList.add('correct');
+                    addHackOutput('PASSWORD ACCEPTED. GRANTING ACCESS...', '#0f0');
+                    setTimeout(() => {
+                        addHackOutput('SECURITY SYSTEM DISABLED. WELCOME, ADMIN.', '#0f0');
+                        setTimeout(() => {
+                            isSecurityActive = false;
+                            hideSecurityOverlay();
+                            playSuccessSound();
+                        }, 1500);
+                    }, 1000);
+                } else {
+                    attemptsRemaining--;
+                    element.classList.add('incorrect');
+                    addHackOutput(`INCORRECT PASSWORD: "${password}". ACCESS DENIED.`, '#f00');
+                    
+                    if (attemptsRemaining <= 0) {
+                        addHackOutput('MAXIMUM ATTEMPTS EXCEEDED. SYSTEM LOCKDOWN INITIATED.', '#f00');
+                        addHackOutput('PLEASE CONTACT SYSTEM ADMINISTRATOR.', '#ff0');
+                        setTimeout(() => {
+                            window.location.href = 'about:blank';
+                        }, 3000);
+                    } else {
+                        updateAttemptsDisplay();
+                        setTimeout(() => {
+                            generatePasswordGame();
+                        }, 1000);
+                    }
+                }
+            }
+
+            function updateAttemptsDisplay() {
+                attemptsCount.textContent = attemptsRemaining;
+                attemptsCounter.textContent = `SECURITY LEVEL: ${getSecurityLevel()} | ${getWarningMessage()}`;
+                
+                if (attemptsRemaining <= 1) {
+                    securityAlert.style.display = 'block';
+                } else {
+                    securityAlert.style.display = 'none';
+                }
+            }
+
+            function getSecurityLevel() {
+                switch(attemptsRemaining) {
+                    case 4: return 'LOW';
+                    case 3: return 'MEDIUM';
+                    case 2: return 'HIGH';
+                    case 1: return 'MAXIMUM';
+                    default: return 'LOCKDOWN';
+                }
+            }
+
+            function getWarningMessage() {
+                switch(attemptsRemaining) {
+                    case 4: return 'SECURE';
+                    case 3: return 'MONITORED';
+                    case 2: return 'ALERT';
+                    case 1: return 'LOCKOUT IMMINENT';
+                    default: return 'SYSTEM LOCKED';
+                }
+            }
+
+            function addHackOutput(text, color = '#0f0') {
+                const div = document.createElement('div');
+                div.textContent = text;
+                div.style.color = color;
+                hackOutput.appendChild(div);
+                hackOutput.scrollTop = hackOutput.scrollHeight;
+            }
+
+            // HTWTHW7234HTG
+            hackInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const input = hackInput.value.trim().toUpperCase();
+                    
+                    if (input === ADMIN_OVERRIDE_COMMAND) {
+                        addHackOutput('ADMIN OVERRIDE ACCEPTED. DISABLING SECURITY...', '#0f0');
+                        setTimeout(() => {
+                            isSecurityActive = false;
+                            hideSecurityOverlay();
+                            playSuccessSound();
+                        }, 1000);
+                    } else if (input === 'ADMIN_OVERRIDE') {
+                        addHackOutput('INVALID OVERRIDE CODE. TRY: ' + ADMIN_OVERRIDE_COMMAND, '#ff0');
+                    }
+                    
+                    hackInput.value = '';
+                }
+            });
+
+            // ==================== NOT NECESSARY ====================
+            
+            function initAudioContext() {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                    soundEnabled = false;
+                    soundToggle.textContent = '🔇 Sound OFF';
+                }
+            }
+
+            function createBeepSound(duration, frequency, volume, type = 'sine', fadeOut = true) {
+                if (!soundEnabled || !audioContext) return;
+                
+                try {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = type;
+                    
+                    const now = audioContext.currentTime;
+                    
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+                    
+                    if (fadeOut) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                    } else {
+                        gainNode.gain.setValueAtTime(volume, now);
+                        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+                    }
+                    
+                    oscillator.start(now);
+                    oscillator.stop(now + duration);
+                } catch (e) {
+                    console.log('Audio error:', e);
+                }
+            }
+
+            function playTypingSound() {
+                createBeepSound(0.08, 800 + Math.random() * 400, 0.1, 'square');
+            }
+
+            function playEnterSound() {
+                createBeepSound(0.2, 600, 0.3, 'sine');
+            }
+
+            function playErrorSound() {
+                createBeepSound(0.3, 300, 0.4, 'sawtooth');
+                setTimeout(() => {
+                    createBeepSound(0.2, 250, 0.3, 'sawtooth');
+                }, 150);
+            }
+
+            function playSuccessSound() {
+                createBeepSound(0.15, 800, 0.2, 'sine');
+                setTimeout(() => {
+                    createBeepSound(0.1, 1000, 0.15, 'sine');
+                }, 100);
+            }
+
+            function playAlertSound() {
+                createBeepSound(0.3, 200, 0.3, 'square', false);
+                setTimeout(() => {
+                    createBeepSound(0.2, 150, 0.25, 'square', false);
+                }, 100);
+            }
+
+            // ==================== ONLY SYSTEM ADMINS! ====================
+            
+            soundToggle.addEventListener('click', function() {
+                soundEnabled = !soundEnabled;
+                soundToggle.textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
+                
+                if (soundEnabled && !audioContext) {
+                    initAudioContext();
+                }
+            });
+
+            document.addEventListener('click', function initAudioOnInteraction() {
+                if (soundEnabled && !audioContext) {
+                    initAudioContext();
+                }
+                document.removeEventListener('click', initAudioOnInteraction);
+            });
+
+            function updateTime() {
+                const now = new Date();
+                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+                currentTimeElement.textContent = utcTime;
+            }
+
+            function setLastLoginTime() {
+                const now = new Date();
+                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+                lastLoginTimeElement.textContent = utcTime;
+            }
+
+            setLastLoginTime();
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // TH72354KO
+            setTimeout(() => {
+                initSecuritySystem();
+            }, 2000);
+
+            // TKN736342O
             let commandHistory = [];
             let historyIndex = -1;
-            
-            // Initial message
+
             setTimeout(() => {
-                addOutput("System ready. Awaiting command.");
+                if (!isSecurityActive) {
+                    addOutput("System ready. Awaiting command.", false, true);
+                    playSuccessSound();
+                }
             }, 1000);
-            
+
+            let typingTimeout;
+            commandInput.addEventListener('input', function() {
+                if (commandInput.value.length > 0 && !isSecurityActive) {
+                    clearTimeout(typingTimeout);
+                    playTypingSound();
+                    typingTimeout = setTimeout(() => {
+                        createBeepSound(0.05, 600, 0.05, 'sine');
+                    }, 100);
+                }
+            });
+
             commandInput.addEventListener('keydown', function(e) {
+                if (isSecurityActive) return;
+                
                 if (e.key === 'Enter') {
-                    const command = commandInput.value.trim().toUpperCase();
+                    playEnterSound();
+                    const command = commandInput.value.trim();
                     
                     if (command) {
-                        addOutput(`> ${command}`);
-                        processCommand(command);
+                        addOutput(`> ${command}`, false, false);
+                        processCommand(command.toUpperCase());
                         commandHistory.push(command);
                         historyIndex = commandHistory.length;
                         commandInput.value = '';
                     }
                 } else if (e.key === 'ArrowUp') {
+                    createBeepSound(0.1, 500, 0.1);
                     e.preventDefault();
                     if (commandHistory.length > 0) {
                         if (historyIndex > 0) {
@@ -278,6 +1098,7 @@
                         commandInput.value = commandHistory[historyIndex] || '';
                     }
                 } else if (e.key === 'ArrowDown') {
+                    createBeepSound(0.1, 400, 0.1);
                     e.preventDefault();
                     if (historyIndex < commandHistory.length - 1) {
                         historyIndex++;
@@ -286,188 +1107,149 @@
                         historyIndex = commandHistory.length;
                         commandInput.value = '';
                     }
+                } else if (e.key.length === 1) {
+                    createBeepSound(0.05, 1000 + Math.random() * 200, 0.08, 'square');
                 }
             });
-            
-            function addOutput(text, isHtml = false) {
+
+            function addOutput(text, isHtml = false, animate = false) {
                 const p = document.createElement('p');
                 if (isHtml) {
                     p.innerHTML = text;
                 } else {
                     p.textContent = text;
                 }
+                
+                if (animate) {
+                    p.classList.add('fade-in');
+                }
+                
                 output.appendChild(p);
                 output.scrollTop = output.scrollHeight;
             }
-            
+
             function processCommand(cmd) {
-                switch(cmd) {
+                const cleanCmd = cmd.replace(/^READ:\/\//, '');
+                
+                switch(cleanCmd) {
                     case 'PROTOCOL12':
+                        playSuccessSound();
                         showProtocolInfo();
                         break;
                     case 'FACS':
+                        playSuccessSound();
                         showFACSInfo();
                         break;
                     case 'OBJECT0':
+                        playSuccessSound();
                         showObject0Info();
                         break;
                     case 'PROJECTANCHOR':
+                        playSuccessSound();
                         showProjectAnchor();
                         break;
                     case 'TIMELINE':
+                        playSuccessSound();
                         showTimeline();
                         break;
+                    case 'TIMELINE/XM5-34T-GHR56-371':
+                        playAlertSound();
+                        setTimeout(() => showTimelineRecording(), 300);
+                        break;
+                    case 'TIMELINE/HT9-07B-TLA12-891':
+                        playAlertSound();
+                        setTimeout(() => showTimelineAlert(), 500);
+                        break;
+                    case 'TIMELINE/TY2-47H-UHT01-502':
+                        playAlertSound();
+                        setTimeout(() => showTimelineReport(), 400);
+                        break;
                     case 'DOSSIER':
+                        playSuccessSound();
                         showDossier();
                         break;
                     case 'CLEAR':
+                        createBeepSound(0.2, 300, 0.2);
                         clearTerminal();
                         break;
+                    case 'HELP':
+                        playSuccessSound();
+                        showHelp();
+                        break;
+                    case 'TIME':
+                        createBeepSound(0.1, 600, 0.1);
+                        showCurrentTime();
+                        break;
                     default:
+                        playErrorSound();
                         addOutput(`Command not recognized: ${cmd}`);
-                        addOutput("Access restricted to authorized commands only.");
+                        addOutput("Type HELP for available commands");
                 }
             }
-            
+
+            // KOP23486243M
+            function showHelp() {
+                addOutput("<div class='response'><div class='response-title'>AVAILABLE COMMANDS</div><div class='command-list'><div class='command-item'>READ://PROTOCOL12 - Protocol 12 organizational overview</div><div class='command-item'>READ://FACS - F.A.C.S. network information</div><div class='command-item'>READ://OBJECT0 - Object-0 research archives</div><div class='command-item'>READ://PROJECTANCHOR - Project Anchor research initiative</div><div class='command-item'>READ://TIMELINE - Event chronology and audio logs</div><div class='command-item'>READ://DOSSIER - Subject dossier: Anderson, Michael J.</div><div class='command-item'>TIME - Display current UTC time</div><div class='command-item'>CLEAR - Clear terminal</div></div><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+            }
+
+            function showCurrentTime() {
+                const now = new Date();
+                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
+                addOutput(`<div class='response'><div class='response-title'>CURRENT SYSTEM TIME</div><p>UTC Time: <span class='timestamp'>${utcTime}</span></p><p>System uptime: 94.7%</p><p>F.A.C.S. synchronization: ACTIVE</p><div class='system-info'>[TIME SYNCHRONIZED]</div></div>`, true);
+            }
+
             function showProtocolInfo() {
-                addOutput("<div class='response'><div class='response-title'>PROTOCOL 12 ORGANIZATIONAL OVERVIEW</div>", true);
-                addOutput("<p>Protocol 12 is a multinational special operations and research organization established under the Global Security Accord of 2016. Our primary mission is the containment, study, and application of anomalous phenomena and artifacts for global security purposes.</p>", true);
-                
-                addOutput("<div class='document'><div class='document-title'>SECURITY NOTICE - DIRECTIVE 12.7.4</div>", true);
-                addOutput("<p>All personnel are reminded that unauthorized access to Protocol 12 systems constitutes a violation of the National Security Act and is punishable by immediate termination. Any attempt to copy, transmit, or disseminate classified information will result in severe penalties.</p></div>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> The events of 2020-2025 remain under information blackout per Executive Order 17-2025. Public knowledge of these events is strictly prohibited.</p></div>", true);
-                
-                addOutput("<p><strong>Current Status:</strong> As of Q3 2025, Protocol 12 maintains operational control over 72% of global containment zones. Research into Object-0 applications continues under Project Prometheus.</p>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>PROTOCOL 12 ORGANIZATIONAL OVERVIEW</div><p>Protocol 12 is a multinational special operations and research organization established under the Global Security Accord of 2016. Our primary mission is the containment, study, and application of anomalous phenomena and artifacts for global security purposes.</p><div class='document'><div class='document-title'>SECURITY NOTICE - DIRECTIVE 12.7.4</div><p>All personnel are reminded that unauthorized access to Protocol 12 systems constitutes a violation of the National Security Act and is punishable by immediate termination. Any attempt to copy, transmit, or disseminate classified information will result in severe penalties.</p></div><div class='classified'><p><strong>CLASSIFIED:</strong> The events of 2020-2025 remain under information blackout per Executive Order 17-2025. Public knowledge of these events is strictly prohibited.</p></div><p><strong>Current Status:</strong> As of Q3 2025, Protocol 12 maintains operational control over 72% of global containment zones. Research into Object-0 applications continues under Project Prometheus.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
             function showFACSInfo() {
-                addOutput("<div class='response'><div class='response-title'>FIELD AUTONOMOUS CONTROLLED STRUCTURE (F.A.C.S.)</div>", true);
-                addOutput("<p>The F.A.C.S. network is Protocol 12's global monitoring and communications infrastructure, established to maintain operational capacity during the global crisis.</p>", true);
-                
-                addOutput("<div class='document'><div class='document-title'>SYSTEM OVERVIEW</div>", true);
-                addOutput("<p>F.A.C.S. utilizes a distributed network of micro-AE generators deployed across 287 satellite platforms and 1,204 ground stations. This system creates stable energy bridges that maintain global communications and surveillance capabilities despite the collapse of conventional infrastructure.</p></div>", true);
-                
-                addOutput("<p><strong>System Capabilities:</strong></p>", true);
-                addOutput("<p>• Global Surveillance: F.A.C.S. monitors AEZ expansion, mutant activity patterns, and survivor movements</p>", true);
-                addOutput("<p>• Information Control: All internet traffic is routed through F.A.C.S. filters with AI-generated simulacra</p>", true);
-                addOutput("<p>• Field Testing: The network broadcasts targeted AE stimuli to identified subjects</p>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> F.A.C.S. has detected 14 anomalous signals of unknown origin since activation. Research teams are investigating potential extraterrestrial connections to Object-0.</p></div>", true);
-                
-                addOutput("<p><strong>Operational Statistics:</strong></p>", true);
-                addOutput("<p>Network Status: OPERATIONAL (94.7% capacity)</p>", true);
-                addOutput("<p>Active Simulacra: 2,847,192</p>", true);
-                addOutput("<p>Identified SPOR Subjects: 1,208</p>", true);
-                addOutput("<p>AE Stimuli Broadcasts: 14,772 daily average</p>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>FIELD AUTONOMOUS CONTROLLED STRUCTURE (F.A.C.S.)</div><p>The F.A.C.S. network is Protocol 12's global monitoring and communications infrastructure, established to maintain operational capacity during the global crisis.</p><div class='document'><div class='document-title'>SYSTEM OVERVIEW</div><p>F.A.C.S. utilizes a distributed network of micro-AE generators deployed across 287 satellite platforms and 1,204 ground stations. This system creates stable energy bridges that maintain global communications and surveillance capabilities despite the collapse of conventional infrastructure.</p></div><p><strong>System Capabilities:</strong></p><p>• Global Surveillance: F.A.C.S. monitors AEZ expansion, mutant activity patterns, and survivor movements</p><p>• Information Control: All internet traffic is routed through F.A.C.S. filters with AI-generated simulacra</p><p>• Field Testing: The network broadcasts targeted AE stimuli to identified subjects</p><div class='classified'><p><strong>CLASSIFIED:</strong> F.A.C.S. has detected 14 anomalous signals of unknown origin since activation. Research teams are investigating potential extraterrestrial connections to Object-0.</p></div><p><strong>Operational Statistics:</strong></p><p>Network Status: OPERATIONAL (94.7% capacity)</p><p>Active Simulacra: 2,847,192</p><p>Identified SPOR Subjects: 1,208</p><p>AE Stimuli Broadcasts: 14,772 daily average</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
             function showObject0Info() {
-                addOutput("<div class='response'><div class='response-title'>OBJECT-0 RESEARCH ARCHIVES</div>", true);
-                addOutput("<p>Designation: Object-0 (Codename: 'Falling Star')</p>", true);
-                addOutput("<p>Classification: KETER</p>", true);
-                addOutput("<p>Recovery Date: October 12, 2015</p>", true);
-                addOutput("<p>Location: Sector-7 (67°24'N, 135°15'W)</p>", true);
-                
-                addOutput("<div class='document'><div class='document-title'>RESEARCH SUMMARY</div>", true);
-                addOutput("<p>Object-0 is a meteorite of extraterrestrial origin recovered from the Tunguska Exclusion Zone. It possesses unprecedented energy-generating capabilities and demonstrates reality-altering properties when activated.</p></div>", true);
-                
-                addOutput("<p><strong>Key Properties:</strong></p>", true);
-                addOutput("<p>• Anomalous Energy (AE) Emission: 1.2 terawatts of clean energy</p>", true);
-                addOutput("<p>• Material Catalyzation: AE exposure alters material properties at molecular level</p>", true);
-                addOutput("<p>• Ontological Destabilization: Creates Anomalous Effect Zones (AEZ)</p>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> Research indicates Object-0 may be a technological artifact. Symbols etched on its surface match no known human language.</p></div>", true);
-                
-                addOutput("<p><strong>Containment Procedures:</strong></p>", true);
-                addOutput("<p>• 1.5m thick lead-tungsten alloy shielding</p>", true);
-                addOutput("<p>• Continuous cryogenic cooling at -196°C</p>", true);
-                addOutput("<p>• Electromagnetic null-field generators</p>", true);
-                addOutput("<p>• 24/7 monitoring by AE sensors</p>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>OBJECT-0 RESEARCH ARCHIVES</div><p>Designation: Object-0 (Codename: 'Falling Star')</p><p>Classification: KETER</p><p>Recovery Date: October 12, 2015</p><p>Location: Sector-7 (67°24'N, 135°15'W)</p><div class='document'><div class='document-title'>RESEARCH SUMMARY</div><p>Object-0 is a meteorite of extraterrestrial origin recovered from the Tunguska Exclusion Zone. It possesses unprecedented energy-generating capabilities and demonstrates reality-altering properties when activated.</p></div><p><strong>Key Properties:</strong></p><p>• Anomalous Energy (AE) Emission: 1.2 terawatts of clean energy</p><p>• Material Catalyzation: AE exposure alters material properties at molecular level</p><p>• Ontological Destabilization: Creates Anomalous Effect Zones (AEZ)</p><div class='classified'><p><strong>CLASSIFIED:</strong> Research indicates Object-0 may be a technological artifact. Symbols etched on its surface match no known human language.</p></div><p><strong>Containment Procedures:</strong></p><p>• 1.5m thick lead-tungsten alloy shielding</p><p>• Continuous cryogenic cooling at -196°C</p><p>• Electromagnetic null-field generators</p><p>• 24/7 monitoring by AE sensors</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
             function showProjectAnchor() {
-                addOutput("<div class='response'><div class='response-title'>PROJECT ANCHOR RESEARCH INITIATIVE</div>", true);
-                addOutput("<p>Project Anchor is a classified research program initiated in Q4 2020 with the objective of developing countermeasures against Ontological Destabilization effects caused by Object-0 emissions.</p>", true);
-                
-                addOutput("<div class='document'><div class='document-title'>PROJECT GOALS</div>", true);
-                addOutput("<p>1. Identify individuals with innate resistance to AE exposure (SPOR subjects)</p>", true);
-                addOutput("<p>2. Enhance resistance capabilities through controlled exposure and Reagent-12 treatments</p>", true);
-                addOutput("<p>3. Develop deployable 'Anchor' units capable of stabilizing AEZ</p></div>", true);
-                
-                addOutput("<p><strong>Research Breakthrough:</strong></p>", true);
-                addOutput("<p>In Q1 2021, researchers discovered that certain genetic markers (G-7 haplogroup) correlate with AE resistance. Of 12,000 screened subjects, 37 demonstrated significant resistance.</p>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> Reagent-12 (R-12) was developed as a catalytic stabilizer. Initial field tests showed promising results but led to catastrophic consequences when combined with the global viral pathogen.</p></div>", true);
-                
-                addOutput("<p><strong>Current Status:</strong></p>", true);
-                addOutput("<p>Project Anchor continues despite the global crisis. The development of Generation-3 Anchor units is underway at Facility Gamma. Field testing authorized in AEZ-7.</p>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>PROJECT ANCHOR RESEARCH INITIATIVE</div><p>Project Anchor is a classified research program initiated in Q4 2020 with the objective of developing countermeasures against Ontological Destabilization effects caused by Object-0 emissions.</p><div class='document'><div class='document-title'>PROJECT GOALS</div><p>1. Identify individuals with innate resistance to AE exposure (SPOR subjects)</p><p>2. Enhance resistance capabilities through controlled exposure and Reagent-12 treatments</p><p>3. Develop deployable 'Anchor' units capable of stabilizing AEZ</p></div><p><strong>Research Breakthrough:</strong></p><p>In Q1 2021, researchers discovered that certain genetic markers (G-7 haplogroup) correlate with AE resistance. Of 12,000 screened subjects, 37 demonstrated significant resistance.</p><div class='classified'><p><strong>CLASSIFIED:</strong> Reagent-12 (R-12) was developed as a catalytic stabilizer. Initial field tests showed promising results but led to catastrophic consequences when combined with the global viral pathogen.</p></div><p><strong>Current Status:</strong></p><p>Project Anchor continues despite the global crisis. The development of Generation-3 Anchor units is underway at Facility Gamma. Field testing authorized in AEZ-7.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
             function showTimeline() {
-                addOutput("<div class='response'><div class='response-title'>EVENT CHRONOLOGY</div>", true);
-                
-                addOutput("<p><strong>OCT 12, 2015:</strong> Object-0 recovered in Siberia. Protocol 12 established.</p>", true);
-                addOutput("<p><strong>MAR 19, 2020:</strong> Global viral pandemic declared.</p>", true);
-                addOutput("<p><strong>SEP 03, 2020:</strong> Reagent-12 development completed.</p>", true);
-                addOutput("<p><strong>NOV 17, 2020:</strong> Catastrophic containment failure at Facility Alpha.</p>", true);
-                addOutput("<p><strong>JAN 15, 2021:</strong> Project Anchor initiated. Sergeant Michael Anderson brought into program.</p>", true);
-                addOutput("<p><strong>APR 22, 2021:</strong> First confirmed Anomalous Effect Zone (AEZ-1).</p>", true);
-                addOutput("<p><strong>DEC 08, 2021:</strong> Security breach at Facility Gamma. Subject Anderson escapes.</p>", true);
-                addOutput("<p><strong>JUN 30, 2022:</strong> Global F.A.C.S. network activated.</p>", true);
-                addOutput("<p><strong>MAR 15, 2025:</strong> Subject Anderson reappears, establishing unauthorized communications.</p>", true);
-                addOutput("<p><strong>AUG 02, 2025:</strong> AEZ coverage reaches 38% of terrestrial surface.</p>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> Timeline entries for Q4 2022 - Q1 2025 are restricted to Level 10 personnel.</p></div>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>EVENT CHRONOLOGY</div><p><strong>OCT 12, 2015:</strong> Object-0 recovered in Siberia. Protocol 12 established.</p><p><strong>MAR 19, 2020:</strong> Global viral pandemic declared.</p><p><strong>SEP 03, 2020:</strong> Reagent-12 development completed.</p><p><strong>NOV 17, 2020:</strong> Catastrophic containment failure at Facility Alpha.</p><p><strong>JAN 15, 2021:</strong> Project Anchor initiated. Sergeant Michael Anderson brought into program.</p><p><strong>APR 22, 2021:</strong> First confirmed Anomalous Effect Zone (AEZ-1).</p><p><strong>DEC 08, 2021:</strong> Security breach at Facility Gamma. Subject Anderson escapes.</p><p><strong>JUN 30, 2022:</strong> Global F.A.C.S. network activated.</p><p><strong>MAR 15, 2025:</strong> Subject Anderson reappears, establishing unauthorized communications.</p><p><strong>AUG 02, 2025:</strong> AEZ coverage reaches 38% of terrestrial surface.</p><div class='classified'><p><strong>CLASSIFIED:</strong> Timeline entries for Q4 2022 - Q1 2025 are restricted to Level 10 personnel.</p></div><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
+            function showTimelineRecording() {
+                addOutput("<div class='response'><div class='response-title'>AUDIO LOG RECORDING - XM5-34T-GHR56-371</div><div class='audio-log'><div class='audio-log-title'>Recording 25.11.2020</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> I hear you, Director</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> Colonel, what the # is going on with the rising number of R-12 infected? I ordered you to completely quarantine all cities and eliminate all infection sources</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Director, my people are doing everything possible, but we have a shortage of 'personnel'. Finding talented specialists from UN forces is a very problematic task</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> Then I'm listening to your ideas, or I'll be forced to take measures to appoint someone else as Colonel. You know we don't have former Colonels, right?</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Sir, I have a proposal to engage the police. They have sufficient personnel to block most streets</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> And how do you propose to hide this? You # want to declassify us?</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> ... We can negotiate with the current presidents of countries belonging to the UN</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> I'll negotiate with them. Keep in mind, if information about PROTOCOL12 leaks beyond the highest authorities, I will immediately 'replace' the Colonel personally... you're dismissed</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Yes, Director...</div></div><div class='system-info'>END OF RECORDING</div></div>", true);
+            }
+
+            function showTimelineAlert() {
+                createBeepSound(0.3, 200, 0.2);
+                setTimeout(() => {
+                    createBeepSound(0.2, 300, 0.15);
+                }, 100);
+                
+                addOutput("<div class='response'><div class='response-title'>SECURITY ALERT RECORDING - HT9-07B-TLA12-891</div><div class='audio-log'><div class='audio-log-title'>Recording 08.12.2021</div><div class='alert-message'>- TO ALL PERSONNEL, SECURITY CONDITIONS HAVE BEEN VIOLATED IN THE 'GAMMA' SCIENTIFIC COMPLEX. ALL NON-MILITARIZED PERSONNEL PLEASE PROCEED TO THE SAFE ZONE FOR EVACUATION</div><div class='alert-stats'>- AT THIS MOMENT ON THE COMPLEX TERRITORY COUNTED:<br>75 DECEASED<br>389 UNIDENTIFIED SUBJECTS.</div><div class='alert-message'>- TO ALL PERSONNEL, ON THE TERRITORY OF THE 'GAMMA' SCIENTIFIC COMPLEX, THE ESCAPE OF OBJECT '#####' HAS BEEN REGISTERED. ALL MILITARIZED PERSONNEL: IMMEDIATELY LOCATE AND RETURN THE OBJECT TO THE EXPERIMENTATION CHAMBER</div><div class='alert-message'>MESSAGE WILL REPEAT UNTIL ALARM DEACTIVATION OR DEACTIVATION <span class='corrupted-text'>#$&)!@_$%!@(*-^$&^$....</span></div></div><div class='system-info'>END OF TRANSMISSION - SIGNAL CORRUPTED</div></div>", true);
+            }
+
+            function showTimelineReport() {
+                addOutput("<div class='response'><div class='response-title'>COLONEL REPORT - TY2-47H-UHT01-502</div><div class='audio-log'><div class='audio-log-title'>Recording 08.12.2021</div><div class='report'>- Report from Colonel Mark Davidson #####, No. 11</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> GAMMA complex security status: all militarized personnel at full readiness. 'Jammers' operating at full capacity. External fortifications weak, inside the complex - everything in order, project status...</div><div class='alert-message'>- TO ALL PERSONNEL, SECURITY CONDITIONS HAVE BEEN VIOLATED IN THE 'GAMMA' SCIENTIFIC COMPLEX. ALL NON-MILITARIZED PERSONNEL PLEASE PROCEED TO THE SAFE ZONE FOR EVACUATION</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Sons of #, what the # is going on there?!</div></div><div class='system-info'>END OF TRANSMISSION</div></div>", true);
+            }
+
             function showDossier() {
-                addOutput("<div class='response'><div class='response-title'>SUBJECT DOSSIER: ANDERSON, MICHAEL J.</div>", true);
-                
-                addOutput("<p><strong>NAME:</strong> Anderson, Michael James</p>", true);
-                addOutput("<p><strong>ID:</strong> P12-SPOR-037</p>", true);
-                addOutput("<p><strong>STATUS:</strong> ACTIVE - PRIORITY TARGET (CODE PHOENIX)</p>", true);
-                addOutput("<p><strong>CLEARANCE:</strong> TERMINATED</p>", true);
-                addOutput("<p><strong>LAST KNOWN LOCATION:</strong> AEZ-9 (QUADRANT 7)</p>", true);
-                addOutput("<p><strong>SPECIAL DESIGNATION:</strong> GENERATION-1 ANCHOR UNIT</p>", true);
-                
-                addOutput("<p><strong>Background:</strong></p>", true);
-                addOutput("<p>Subject Anderson is a former police sergeant recruited into Protocol 12 following the 2020 containment crisis. Genetic screening identified him as a SPOR candidate (G-7 haplogroup with 97.8% resistance marker expression).</p>", true);
-                
-                addOutput("<p><strong>Project Anchor Participation:</strong></p>", true);
-                addOutput("<p>• 14 R-12 intravenous infusion sessions</p>", true);
-                addOutput("<p>• Controlled AE exposure (total 142 minutes)</p>", true);
-                addOutput("<p>• Cognitive restructuring therapy</p>", true);
-                addOutput("<p>• Physical enhancement protocols</p>", true);
-                
-                addOutput("<div class='classified'><p><strong>CLASSIFIED:</strong> Subject demonstrated spontaneous AEZ stabilization abilities during Test 37, exceeding all projections. Designated as perfect Generation-1 Anchor unit.</p></div>", true);
-                
-                addOutput("<p><strong>Current Threat Assessment:</strong></p>", true);
-                addOutput("<p>• Knowledge of Protocol 12 operations and facilities</p>", true);
-                addOutput("<p>• Unauthorized access to F.A.C.S. network</p>", true);
-                addOutput("<p>• Attempts to contact other survivors</p>", true);
-                addOutput("<p>• Potential to reveal Object-0 existence</p>", true);
-                
-                addOutput("<p><strong>Directive:</strong> Capture alive for reconditioning and research. Lethal force authorized only if capture proves impossible.</p>", true);
-                
-                addOutput("<div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
+                addOutput("<div class='response'><div class='response-title'>SUBJECT DOSSIER: ANDERSON, MICHAEL J.</div><p><strong>NAME:</strong> Anderson, Michael James</p><p><strong>ID:</strong> P12-SPOR-037</p><p><strong>STATUS:</strong> ACTIVE - PRIORITY TARGET (CODE PHOENIX)</p><p><strong>CLEARANCE:</strong> TERMINATED</p><p><strong>LAST KNOWN LOCATION:</strong> AEZ-9 (QUADRANT 7)</p><p><strong>SPECIAL DESIGNATION:</strong> GENERATION-1 ANCHOR UNIT</p><p><strong>Background:</strong></p><p>Subject Anderson is a former police sergeant recruited into Protocol 12 following the 2020 containment crisis. Genetic screening identified him as a SPOR candidate (G-7 haplogroup with 97.8% resistance marker expression).</p><p><strong>Project Anchor Participation:</strong></p><p>• 14 R-12 intravenous infusion sessions</p><p>• Controlled AE exposure (total 142 minutes)</p><p>• Cognitive restructuring therapy</p><p>• Physical enhancement protocols</p><div class='classified'><p><strong>CLASSIFIED:</strong> Subject demonstrated spontaneous AEZ stabilization abilities during Test 37, exceeding all projections. Designated as perfect Generation-1 Anchor unit.</p></div><p><strong>Current Threat Assessment:</strong></p><p>• Knowledge of Protocol 12 operations and facilities</p><p>• Unauthorized access to F.A.C.S. network</p><p>• Attempts to contact other survivors</p><p>• Potential to reveal Object-0 existence</p><p><strong>Directive:</strong> Capture alive for reconditioning and research. Lethal force authorized only if capture proves impossible.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
             }
-            
+
             function clearTerminal() {
                 output.innerHTML = '';
                 addOutput("Terminal cleared.");
                 addOutput("Enter command to access secure database.");
             }
+
+            setInterval(() => {
+                if (soundEnabled && audioContext && Math.random() > 0.8 && !isSecurityActive) {
+                    createBeepSound(0.05, 100 + Math.random() * 100, 0.03, 'sine');
+                }
+            }, 5000);
         });
     </script>
 </body>
