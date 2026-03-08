@@ -1,1255 +1,1462 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROTOCOL 12 TERMINAL ACCESS</title>
+    <title>F.A.C.S. TERMINAL v12.7.4 | PROTOCOL 12</title>
     <style>
-        /* 233450836245523 */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Courier New', monospace;
+        }
+        
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #79c0ff;
+            --accent-danger: #f85149;
+            --accent-warning: #d29922;
+            --accent-success: #3fb950;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border-color: #30363d;
+            --glow-primary: rgba(88, 166, 255, 0.3);
+            --glow-danger: rgba(248, 81, 73, 0.3);
         }
         
         body {
-            background-color: #0a0f2b;
-            color: #a0b3e0;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', 'Inter', monospace;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
-        }
-        
-        .container {
-            width: 95%;
-            max-width: 900px;
-            height: 85vh;
-            background-color: rgba(10, 15, 43, 0.95);
-            border: 1px solid #1a3a8f;
-            box-shadow: 0 0 10px rgba(26, 58, 143, 0.5);
-            display: flex;
-            flex-direction: column;
             position: relative;
-            overflow: hidden;
+            line-height: 1.6;
         }
         
-        /* 2346823043892 */
-        .security-overlay {
+        /* Subtle grid background */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #000;
-            color: #0f0;
-            z-index: 1000;
-            display: none;
+            background-image: 
+                linear-gradient(rgba(88, 166, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(88, 166, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Ambient glow */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--glow-primary) 0%, transparent 70%);
+            top: -300px;
+            right: -300px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+        
+        /* Main container */
+        .terminal-container {
+            height: 100vh;
+            display: flex;
             flex-direction: column;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .hack-terminal {
-            flex-grow: 1;
-            background-color: #000;
-            border: 1px solid #0f0;
-            padding: 20px;
-            margin: 10px 0;
-            overflow-y: auto;
-        }
-        
-        .hack-output {
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-        
-        .hack-prompt {
-            display: flex;
-            align-items: center;
-        }
-        
-        .hack-input {
-            background: transparent;
-            border: none;
-            color: #0f0;
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            width: 100%;
-            outline: none;
-            caret-color: #0f0;
-        }
-        
-        .password-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #0f0;
-        }
-        
-        .password-option {
-            padding: 8px;
-            background: #002200;
-            border: 1px solid #0f0;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .password-option:hover {
-            background: #004400;
-        }
-        
-        .password-option.correct {
-            background: #004400;
-            border-color: #0f0;
-            color: #0f0;
-        }
-        
-        .password-option.incorrect {
-            background: #440000;
-            border-color: #f00;
-            color: #f00;
-        }
-        
-        .attempts-counter {
-            color: #ff0;
-            margin: 10px 0;
-        }
-        
-        .security-alert {
-            color: #f00;
-            animation: blink-alert 0.5s infinite;
-        }
-        
-        @keyframes blink-alert {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        /* Остальные стили остаются без изменений */
-        .header {
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            background-color: rgba(18, 26, 64, 0.9);
-            border-bottom: 1px solid #1a3a8f;
-        }
-        
-        .logo {
-            width: 60px;
-            height: 60px;
-            background: #1a3a8f;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 24px;
             position: relative;
-            margin-right: 15px;
-            border: 1px solid #2a52be;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
         }
         
-        .logo::before {
-            content: "";
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
             position: absolute;
-            width: 45px;
-            height: 45px;
-            background: #000;
-            border-radius: 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), transparent);
         }
         
-        .logo::after {
-            content: "";
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 17px solid #1a3a8f;
-        }
-        
-        .header-text {
-            flex-grow: 1;
-        }
-        
-        .header-text h1 {
-            font-size: 1.8rem;
-            letter-spacing: 2px;
-            color: #c0cff0;
-        }
-        
-        .header-text p {
-            font-size: 0.8rem;
-            color: #6b7aa0;
-        }
-        
-        .access-level {
-            background-color: rgba(139, 0, 0, 0.2);
-            color: #e88;
-            padding: 5px 10px;
-            border: 1px solid #800;
-            font-size: 0.8rem;
-            text-align: center;
-        }
-        
-        .terminal {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
+        .header-top {
             display: flex;
-            flex-direction: column;
-            background: 
-                linear-gradient(rgba(10, 15, 43, 0.95), rgba(10, 15, 43, 0.95));
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
         
-        .output {
-            flex-grow: 1;
-            margin-bottom: 15px;
-            overflow-y: auto;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-        
-        .output p {
-            margin-bottom: 8px;
-        }
-        
-        .prompt {
+        .logo-section {
             display: flex;
             align-items: center;
-            padding: 5px 0;
+            gap: 16px;
         }
         
-        .prompt-text {
-            color: #c0cff0;
-            margin-right: 10px;
-            white-space: nowrap;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 1.2em;
+            position: relative;
         }
         
-        .prompt-text::before {
-            content: "> ";
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-success);
+            border-radius: 50%;
+            bottom: 4px;
+            right: 4px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25em;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            margin-bottom: 2px;
+        }
+        
+        .logo-text span {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            font-size: 0.85em;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .status-item .label {
+            color: var(--text-muted);
+        }
+        
+        .status-item .value {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+        
+        .status-item .value.alert {
+            color: var(--accent-danger);
+            animation: blink 2s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Custom scrollbar */
+        .main-content::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .main-content::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 5px;
+        }
+        
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+            border: 2px solid var(--bg-secondary);
+        }
+        
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+        
+        /* Output styling */
+        .output {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        
+        .command-line-entry {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .command-line-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .command-prompt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+        .prompt-symbol {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+        
+        .command-text {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        /* Content cards */
+        .content-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 12px;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-classified {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--accent-danger);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+        }
+        
+        .badge-omega {
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+        
+        /* Data grid */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        
+        .data-item {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-primary);
+        }
+        
+        .data-item.danger {
+            border-left-color: var(--accent-danger);
+        }
+        
+        .data-item.warning {
+            border-left-color: var(--accent-warning);
+        }
+        
+        .data-label {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .data-value {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+        
+        /* Lists */
+        .feature-list {
+            list-style: none;
+            margin: 12px 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+        
+        .feature-list li::before {
+            content: '›';
+            position: absolute;
+            left: 8px;
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+        
+        /* Audio log styling */
+        .audio-log {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .log-header {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85em;
+            flex-wrap: wrap;
+        }
+        
+        .log-entry {
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+        }
+        
+        .log-entry.speaker-director {
+            border-left-color: var(--accent-primary);
+        }
+        
+        .log-entry.speaker-colonel {
+            border-left-color: var(--accent-warning);
+        }
+        
+        .log-entry.speaker-security {
+            border-left-color: var(--accent-danger);
+        }
+        
+        .log-entry.speaker-control {
+            border-left-color: var(--accent-success);
+        }
+        
+        .log-speaker {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+        }
+        
+        .log-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .log-alert {
+            color: var(--accent-danger);
+            font-weight: 600;
+            text-align: center;
+            padding: 8px;
+            margin: 8px 0;
+            background: rgba(248, 81, 73, 0.1);
+            border-radius: 4px;
+        }
+        
+        /* Command input area */
+        .input-area {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-prompt {
+            color: var(--accent-primary);
+            font-weight: 700;
+            font-size: 1.1em;
+            user-select: none;
         }
         
         .command-input {
             background: transparent;
             border: none;
-            color: #c0cff0;
-            font-size: 1rem;
-            width: 100%;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            flex: 1;
             outline: none;
-            caret-color: #c0cff0;
-            font-family: 'Courier New', monospace;
+            caret-color: var(--accent-primary);
         }
         
         .command-input::placeholder {
-            color: #6b7aa0;
+            color: var(--text-muted);
         }
         
+        /* Footer */
         .footer {
-            padding: 10px 15px;
-            text-align: right;
-            background-color: rgba(18, 26, 64, 0.9);
-            border-top: 1px solid #1a3a8f;
-            color: #6b7aa0;
-            font-size: 0.8rem;
+            margin-top: 12px;
             display: flex;
             justify-content: space-between;
+            font-size: 0.8em;
+            color: var(--text-muted);
         }
         
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background-color: #c0cff0;
-            margin-left: 2px;
-            vertical-align: middle;
-            animation: blink 1s infinite;
+        .footer-left, .footer-right {
+            display: flex;
+            gap: 16px;
         }
         
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
-        .response {
-            margin-top: 10px;
-            padding-left: 15px;
-            border-left: 1px solid #1a3a8f;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.6s ease-out forwards;
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-success);
         }
         
-        .response-title {
-            color: #2a52be;
-            margin-bottom: 10px;
-            font-weight: bold;
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out 0.2s forwards;
+        .status-dot.alert {
+            background: var(--accent-danger);
+            animation: pulse 2s infinite;
         }
         
-        .document {
-            background-color: rgba(26, 58, 143, 0.1);
-            border: 1px solid #1a3a8f;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 0.95rem;
-            opacity: 0;
-            transform: translateX(-20px);
-            animation: slideInLeft 0.5s ease-out 0.3s forwards;
+        /* Boot sequence */
+        .boot-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
         }
         
-        .classified {
-            background-color: rgba(139, 0, 0, 0.1);
-            border-left: 3px solid #800;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 0.9rem;
-            opacity: 0;
-            transform: scale(0.95);
-            animation: scaleIn 0.4s ease-out 0.4s forwards;
+        .boot-content {
+            max-width: 600px;
+            width: 100%;
         }
         
-        .system-info {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #1a3a8f;
-            color: #6b7aa0;
-            font-size: 0.85rem;
-            opacity: 0;
-            animation: fadeIn 0.5s ease-out 0.6s forwards;
-        }
-        
-        .command-list {
-            background-color: rgba(26, 58, 143, 0.1);
-            border: 1px solid #1a3a8f;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 0.95rem;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeInUp 0.5s ease-out 0.2s forwards;
-        }
-        
-        .command-item {
-            margin: 5px 0;
-            color: #c0cff0;
-            opacity: 0;
-            transform: translateX(-10px);
-            animation: slideInLeft 0.4s ease-out forwards;
-        }
-        
-        .command-item:nth-child(1) { animation-delay: 0.3s; }
-        .command-item:nth-child(2) { animation-delay: 0.4s; }
-        .command-item:nth-child(3) { animation-delay: 0.5s; }
-        .command-item:nth-child(4) { animation-delay: 0.6s; }
-        .command-item:nth-child(5) { animation-delay: 0.7s; }
-        .command-item:nth-child(6) { animation-delay: 0.8s; }
-        .command-item:nth-child(7) { animation-delay: 0.9s; }
-        .command-item:nth-child(8) { animation-delay: 1.0s; }
-        
-        .audio-log {
-            background-color: rgba(40, 40, 80, 0.2);
-            border: 1px solid #2a52be;
-            padding: 15px;
-            margin: 10px 0;
-            font-style: italic;
-            opacity: 0;
-            animation: fadeIn 0.6s ease-out 0.3s forwards;
-        }
-        
-        .audio-log-title {
-            color: #4a72d0;
-            font-weight: bold;
-            margin-bottom: 10px;
+        .boot-logo {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 32px;
             text-align: center;
+            letter-spacing: 2px;
         }
         
-        .dialogue {
-            margin: 8px 0;
-            padding-left: 10px;
-        }
-        
-        .dialogue-speaker {
-            color: #c0cff0;
-            font-weight: bold;
-        }
-        
-        .alert-message {
-            background-color: rgba(139, 0, 0, 0.2);
-            border: 1px solid #800;
-            padding: 12px;
-            margin: 10px 0;
-            color: #e88;
-            font-weight: bold;
+        .boot-line {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
             opacity: 0;
-            animation: fadeIn 0.5s ease-out 0.3s forwards;
+            animation: fadeIn 0.3s forwards;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .alert-stats {
-            background-color: rgba(100, 0, 0, 0.2);
-            border-left: 3px solid #800;
-            padding: 10px;
-            margin: 8px 0;
-            font-size: 0.9rem;
-            opacity: 0;
-            animation: slideInLeft 0.4s ease-out 0.4s forwards;
+        .boot-line.success::before {
+            content: '✓';
+            color: var(--accent-success);
+            font-weight: 700;
         }
         
-        .corrupted-text {
-            color: #f55;
-            font-family: monospace;
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 2px 4px;
-            border-radius: 2px;
+        .boot-line.processing::before {
+            content: '◉';
+            color: var(--accent-primary);
+            animation: spin 1s linear infinite;
         }
         
-        .report {
-            background-color: rgba(26, 58, 143, 0.2);
-            border: 1px solid #2a52be;
-            padding: 12px;
-            margin: 10px 0;
-            font-size: 0.9rem;
-            opacity: 0;
-            animation: fadeIn 0.5s ease-out 0.3s forwards;
-        }
-        
-        .sound-control {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(26, 58, 143, 0.5);
-            border: 1px solid #2a52be;
-            color: #c0cff0;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            z-index: 100;
-        }
-        
-        .sound-control:hover {
-            background: rgba(26, 58, 143, 0.7);
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            to { opacity: 1; }
         }
         
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* ========== Z28013Y816 ========== */
-        .scan-line {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .boot-progress {
             width: 100%;
             height: 2px;
-            background: rgba(0, 255, 0, 0.3);
-            animation: scan 8s linear infinite;
-            z-index: 999;
-            pointer-events: none;
-            display: none;
+            background: var(--border-color);
+            margin-top: 32px;
+            border-radius: 1px;
+            overflow: hidden;
         }
         
-        @keyframes scan {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
-        }
-        
-        .static-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+        .boot-progress-bar {
             height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.15) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 9998;
-            opacity: 0.05;
-            animation: static 0.1s infinite;
-            display: none;
+            background: var(--accent-primary);
+            width: 0%;
+            transition: width 0.3s ease;
         }
         
-        @keyframes static {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-5px, -5px); }
+        .hidden {
+            display: none !important;
         }
         
-        .glitch-text {
-            position: relative;
-            display: inline-block;
+        /* Welcome screen */
+        .welcome-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
         }
         
-        .glitch-text::before,
-        .glitch-text::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
+        .welcome-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+            cursor: pointer;
         }
         
-        .glitch-text::before {
-            left: 2px;
-            text-shadow: -2px 0 #ff00ff;
-            clip: rect(24px, 550px, 90px, 0);
-            animation: glitch-anim 5s infinite linear alternate-reverse;
+        .welcome-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.1);
         }
         
-        .glitch-text::after {
-            left: -2px;
-            text-shadow: -2px 0 #00ffff;
-            clip: rect(85px, 550px, 140px, 0);
-            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        .welcome-card h3 {
+            font-size: 0.9em;
+            color: var(--accent-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        @keyframes glitch-anim {
-            0% { clip: rect(42px, 9999px, 44px, 0); }
-            5% { clip: rect(12px, 9999px, 59px, 0); }
-            10% { clip: rect(48px, 9999px, 29px, 0); }
-            15.9% { clip: rect(42px, 9999px, 73px, 0); }
-            20% { clip: rect(63px, 9999px, 27px, 0); }
-            25% { clip: rect(34px, 9999px, 55px, 0); }
-            30% { clip: rect(86px, 9999px, 73px, 0); }
-            35% { clip: rect(20px, 9999px, 20px, 0); }
-            40% { clip: rect(26px, 9999px, 60px, 0); }
-            45% { clip: rect(25px, 9999px, 66px, 0); }
-            50% { clip: rect(57px, 9999px, 98px, 0); }
-            55% { clip: rect(5px, 9999px, 46px, 0); }
-            60% { clip: rect(82px, 9999px, 31px, 0); }
-            65% { clip: rect(54px, 9999px, 27px, 0); }
-            70% { clip: rect(28px, 9999px, 99px, 0); }
-            75% { clip: rect(45px, 9999px, 69px, 0); }
-            80% { clip: rect(23px, 9999px, 85px, 0); }
-            85% { clip: rect(54px, 9999px, 84px, 0); }
-            90% { clip: rect(45px, 9999px, 47px, 0); }
-            95% { clip: rect(37px, 9999px, 20px, 0); }
-            100% { clip: rect(4px, 9999px, 91px, 0); }
+        .welcome-card p {
+            font-size: 0.85em;
+            color: var(--text-secondary);
         }
         
-        @keyframes glitch-anim2 {
-            0% { clip: rect(65px, 9999px, 100px, 0); }
-            5% { clip: rect(52px, 9999px, 74px, 0); }
-            10% { clip: rect(79px, 9999px, 85px, 0); }
-            15% { clip: rect(75px, 9999px, 5px, 0); }
-            20% { clip: rect(67px, 9999px, 61px, 0); }
-            25% { clip: rect(14px, 9999px, 79px, 0); }
-            30% { clip: rect(1px, 9999px, 66px, 0); }
-            35% { clip: rect(86px, 9999px, 30px, 0); }
-            40% { clip: rect(23px, 9999px, 98px, 0); }
-            45% { clip: rect(85px, 9999px, 72px, 0); }
-            50% { clip: rect(71px, 9999px, 75px, 0); }
-            55% { clip: rect(2px, 9999px, 48px, 0); }
-            60% { clip: rect(30px, 9999px, 16px, 0); }
-            65% { clip: rect(59px, 9999px, 50px, 0); }
-            70% { clip: rect(41px, 9999px, 62px, 0); }
-            75% { clip: rect(2px, 9999px, 82px, 0); }
-            80% { clip: rect(47px, 9999px, 73px, 0); }
-            85% { clip: rect(3px, 9999px, 27px, 0); }
-            90% { clip: rect(26px, 9999px, 55px, 0); }
-            95% { clip: rect(42px, 9999px, 97px, 0); }
-            100% { clip: rect(38px, 9999px, 49px, 0); }
+        /* Error message */
+        .error-message {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            border-radius: 6px;
+            padding: 12px 16px;
+            color: var(--accent-danger);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .flicker {
-            animation: flicker 0.1s infinite;
+        .error-icon {
+            font-size: 1.2em;
         }
         
-        @keyframes flicker {
-            0% { opacity: 0.97; }
-            5% { opacity: 0.2; }
-            10% { opacity: 0.9; }
-            15% { opacity: 0.1; }
-            20% { opacity: 1; }
-            100% { opacity: 1; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terminal-container {
+                padding: 12px;
+            }
+            
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 8px;
+            }
         }
         
-        .corruption {
-            color: #f55;
-            animation: corruption 2s infinite;
-            position: relative;
-        }
-        
-        @keyframes corruption {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; text-shadow: 0 0 5px #f00; }
-            100% { opacity: 1; }
-        }
-        
-        .pixelate {
-            image-rendering: pixelated;
-            filter: contrast(1.2) brightness(0.9);
+        /* Selection color */
+        ::selection {
+            background: rgba(88, 166, 255, 0.3);
+            color: var(--text-primary);
         }
     </style>
 </head>
 <body>
-    <!-- Y234789236T2736029730 -->
-    <div class="scan-line" id="scan-line"></div>
-    <div class="static-overlay" id="static-overlay"></div>
-
-    <!-- 3729364T2342H234 -->
-    <div class="security-overlay" id="security-overlay">
-        <div class="hack-terminal">
-            <div class="hack-output" id="hack-output">
-                <div>PROTOCOL 12 SECURITY SYSTEM v3.7.4</div>
-                <div>UNAUTHORIZED ACCESS DETECTED</div>
-                <div>INITIATING COUNTERMEASURES...</div>
-                <div>================================</div>
-                <div>PASSWORD REQUIRED FOR SYSTEM ACCESS</div>
-                <div>ATTEMPTS REMAINING: <span id="attempts-count">4</span></div>
-                <div>================================</div>
-                <div>SELECT THE CORRECT PASSWORD:</div>
-            </div>
-            <div class="password-grid" id="password-grid">
-                <!-- TYFP27354097235 -->
-            </div>
-            <div class="attempts-counter" id="attempts-counter">
-                SECURITY LEVEL: MAXIMUM | LOCKOUT IMMINENT
-            </div>
-            <div class="security-alert" id="security-alert">
-                WARNING: UNAUTHORIZED ACCESS WILL BE REPORTED
-            </div>
-            <div class="hack-prompt">
-                <span>> </span>
-                <input type="text" class="hack-input" id="hack-input" placeholder="Type ADMIN_OVERRIDE for emergency access..." autofocus>
+    <div class="ambient-glow"></div>
+    
+    <!-- Boot Sequence -->
+    <div id="bootOverlay" class="boot-overlay">
+        <div class="boot-content">
+            <div class="boot-logo">F.A.C.S.</div>
+            <div id="bootText"></div>
+            <div class="boot-progress">
+                <div id="bootProgressBar" class="boot-progress-bar"></div>
             </div>
         </div>
     </div>
-
-    <button class="sound-control" id="sound-toggle">🔊 Sound ON</button>
     
-    <div class="container">
-        <div class="header">
-            <div class="logo"></div>
-            <div class="header-text">
-                <!-- YB2375467792387023 -->
-                <h1 class="glitch-text" data-text="PROTOCOL 12">PROTOCOL 12</h1>
-                <p>SECURE TERMINAL ACCESS - LEVEL 9 CLEARANCE</p>
+    <!-- Main Terminal -->
+    <div id="terminal" class="terminal-container hidden">
+        <header class="header">
+            <div class="header-top">
+                <div class="logo-section">
+                    <div class="logo-icon">P12</div>
+                    <div class="logo-text">
+                        <h1>Protocol 12 Terminal</h1>
+                        <span>F.A.C.S. Secure Access</span>
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="label">NODE:</span>
+                        <span class="value">PRIME-ALPHA</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">CLEARANCE:</span>
+                        <span class="value alert">OMEGA</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">USER:</span>
+                        <span class="value">FIELD_OPS_TEMP</span>
+                    </div>
+                </div>
             </div>
-            <div class="access-level">
-                ACCESS: OMEGA<br>
-                USER: ADMIN
-            </div>
+        </header>
+        
+        <main class="main-content" id="mainContent">
+            <div class="output" id="output"></div>
+        </main>
+        
+        <div class="input-area">
+            <span class="input-prompt">❯</span>
+            <input type="text" class="command-input" id="commandInput" autocomplete="off" spellcheck="false" placeholder="Enter command..." autofocus>
         </div>
         
-        <div class="terminal">
-            <div class="output" id="output">
-                <p class="fade-in">Initializing Protocol 12 terminal access...</p>
-                <p class="fade-in-delayed">System authentication complete. Security protocols enabled.</p>
-                <p class="fade-in-delayed" style="animation-delay: 0.6s">F.A.C.S. network status: OPERATIONAL</p>
-                <p class="fade-in-delayed" style="animation-delay: 0.9s">Last login: <span class="timestamp" id="last-login-time"></span></p>
-                <p class="fade-in-delayed" style="animation-delay: 1.2s">Enter command to access secure database.</p>
-                <p>></p>
+        <footer class="footer">
+            <div class="footer-left">
+                <div class="footer-item">
+                    <div class="status-dot"></div>
+                    <span>System Operational</span>
+                </div>
+                <span>v12.7.4</span>
+                <span>AES-4096</span>
             </div>
-            <div class="prompt">
-                <div class="prompt-text">PROTOCOL12</div>
-                <input type="text" class="command-input" id="command-input" placeholder="Enter command..." autofocus>
-                <div class="cursor"></div>
+            <div class="footer-right">
+                <span>© 2026 Protocol 12</span>
             </div>
-        </div>
-        
-        <div class="footer">
-            <div>F.A.C.S. NODE: PRIME-ALPHA</div>
-            <div>TIMESTAMP: <span class="timestamp" id="current-time"></span></div>
-            <div>VERSION: 12.7.4</div>
-        </div>
+        </footer>
     </div>
 
     <script>
-        // ==================== ONLY SYSTEM ADMINS! ====================
-        
-        // HACK COMMAND!
-        const ADMIN_OVERRIDE_COMMAND = "ALPHA_OMEGA_BYPASS_789321";
+        // Database content
+        const database = {
+            'READ://PROTOCOL12': {
+                title: 'Organization Overview',
+                badge: 'classified',
+                content: `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Organization</div>
+                            <div class="data-value">Protocol 12</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Type</div>
+                            <div class="data-value">Special Operations & Research</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Established</div>
+                            <div class="data-value">Global Security Agreement 2016</div>
+                        </div>
+                        <div class="data-item danger">
+                            <div class="data-label">Classification</div>
+                            <div class="data-value">OMEGA CLEARANCE</div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 16px 0;">
+                        Multinational organization dedicated to containment, study, and application 
+                        of anomalous phenomena and artifacts for global security purposes.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Secure anomalous objects and entities</li>
+                        <li>Research anomalous properties and applications</li>
+                        <li>Protect global stability through controlled use of anomalies</li>
+                        <li>Maintain absolute secrecy regarding existence of anomalies</li>
+                    </ul>
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(248, 81, 73, 0.1); border-radius: 6px; border-left: 3px solid var(--accent-danger);">
+                        <span style="color: var(--accent-danger); font-weight: 600;">WARNING:</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">
+                            Unauthorized access punishable by immediate termination under Executive Order 17-2025.
+                        </span>
+                    </div>
+                `
+            },
+            
+            'READ://SOURCES': {
+                title: 'Information Sources',
+                badge: 'omega',
+                content: `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Primary Database</div>
+                            <div class="data-value">F.A.C.S.</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Node</div>
+                            <div class="data-value">PRIME-ALPHA</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Status</div>
+                            <div class="data-value" style="color: var(--accent-success);">94.7% Operational</div>
+                        </div>
+                        <div class="data-item warning">
+                            <div class="data-label">Anomalies</div>
+                            <div class="data-value" style="color: var(--accent-warning);">14 Signals Detected</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <div class="data-label" style="margin-bottom: 8px;">INFRASTRUCTURE</div>
+                        <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="data-item">
+                                <div class="data-value">287 Satellite Platforms</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-value">1,204 Ground Stations</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-value">2,847,192 Active Simulacra</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-value">1,208 SPOR Subjects</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            
+            'READ://DOSSIER': {
+                title: 'Subject Dossier: P12-SPOR-037',
+                badge: 'classified',
+                content: `
+                    <div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div class="data-item danger" style="margin-bottom: 12px;">
+                                <div class="data-label">Status</div>
+                                <div class="data-value" style="color: var(--accent-danger);">ACTIVE — PRIORITY TARGET</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Codename</div>
+                                <div class="data-value">PHOENIX</div>
+                            </div>
+                        </div>
+                        <div style="flex: 2; min-width: 300px;">
+                            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+                                <div class="data-item">
+                                    <div class="data-label">Name</div>
+                                    <div class="data-value">Michael James Anderson</div>
+                                </div>
+                                <div class="data-item">
+                                    <div class="data-label">Former Occupation</div>
+                                    <div class="data-value">Police Sergeant</div>
+                                </div>
+                                <div class="data-item">
+                                    <div class="data-label">Project</div>
+                                    <div class="data-value">Anchor (Gen-1)</div>
+                                </div>
+                                <div class="data-item">
+                                    <div class="data-label">Haplogroup</div>
+                                    <div class="data-value">G-7 (97.8%)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-label" style="margin: 16px 0 8px;">ABILITIES</div>
+                    <ul class="feature-list">
+                        <li>Spontaneous AEZ stabilization (Test 37 breakthrough)</li>
+                        <li>Enhanced resistance to ontological destabilization</li>
+                        <li>Rapid cellular regeneration post-R-12 exposure</li>
+                        <li>14x R-12 infusions tolerated</li>
+                        <li>142 minutes total AE exposure</li>
+                    </ul>
+                    
+                    <div style="margin-top: 16px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div>
+                                <div class="data-label">Last Known Location</div>
+                                <div class="data-value">AEZ-9 (Quadrant 7)</div>
+                            </div>
+                            <div>
+                                <div class="data-label">Directive</div>
+                                <div class="data-value" style="color: var(--accent-danger);">CAPTURE ALIVE</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            
+            'READ://TIMELINE': {
+                title: 'Chronological Events',
+                badge: 'omega',
+                content: `
+                    <div style="position: relative; padding-left: 24px; border-left: 2px solid var(--border-color); margin: 16px 0;">
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: -31px; width: 12px; height: 12px; background: var(--accent-primary); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>
+                            <div style="font-size: 0.85em; color: var(--accent-primary); font-weight: 600; margin-bottom: 4px;">12.10.2015</div>
+                            <div style="color: var(--text-secondary);">Discovery of Object-0. Protocol 12 established.</div>
+                        </div>
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: -31px; width: 12px; height: 12px; background: var(--border-color); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">19.03.2020</div>
+                            <div style="color: var(--text-secondary);">Global viral pandemic begins.</div>
+                        </div>
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: -31px; width: 12px; height: 12px; background: var(--border-color); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">15.01.2021</div>
+                            <div style="color: var(--text-secondary);">Project Anchor initiated. Anderson recruited.</div>
+                        </div>
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: -31px; width: 12px; height: 12px; background: var(--accent-danger); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>
+                            <div style="font-size: 0.85em; color: var(--accent-danger); font-weight: 600; margin-bottom: 4px;">08.12.2021</div>
+                            <div style="color: var(--text-secondary);"><strong>SECURITY BREACH:</strong> Subject P12-SPOR-037 escaped Site Gamma.</div>
+                        </div>
+                        <div style="margin-bottom: 20px; position: relative;">
+                            <div style="position: absolute; left: -31px; width: 12px; height: 12px; background: var(--accent-success); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>
+                            <div style="font-size: 0.85em; color: var(--accent-success); font-weight: 600; margin-bottom: 4px;">Q3 2025</div>
+                            <div style="color: var(--text-secondary);">Current: Protocol 12 controls 72% of containment zones.</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 24px; padding: 16px; background: var(--bg-primary); border-radius: 8px;">
+                        <div class="data-label" style="margin-bottom: 12px;">AVAILABLE AUDIO LOGS</div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <code style="background: var(--bg-secondary); padding: 6px 12px; border-radius: 4px; font-size: 0.85em; color: var(--accent-primary); cursor: pointer;">XM5-34T-GHR56-371</code>
+                            <code style="background: var(--bg-secondary); padding: 6px 12px; border-radius: 4px; font-size: 0.85em; color: var(--accent-danger); cursor: pointer;">HT9-07B-TLA12-891</code>
+                            <code style="background: var(--bg-secondary); padding: 6px 12px; border-radius: 4px; font-size: 0.85em; color: var(--accent-primary); cursor: pointer;">TY2-47H-UHT01-502</code>
+                        </div>
+                    </div>
+                `
+            },
+            
+            'READ://FACS': {
+                title: 'F.A.C.S. Network Status',
+                badge: 'omega',
+                content: `
+                    <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="data-item">
+                            <div class="data-label">Satellites</div>
+                            <div class="data-value" style="font-size: 1.5em; color: var(--accent-primary);">287</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Ground Stations</div>
+                            <div class="data-value" style="font-size: 1.5em; color: var(--accent-primary);">1,204</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Coverage</div>
+                            <div class="data-value" style="font-size: 1.5em; color: var(--accent-success);">99.2%</div>
+                        </div>
+                        <div class="data-item warning">
+                            <div class="data-label">Anomalies</div>
+                            <div class="data-value" style="font-size: 1.5em; color: var(--accent-warning);">14</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div class="content-card" style="margin: 0;">
+                            <div class="data-label">ACTIVE SIMULACRA</div>
+                            <div class="data-value" style="font-size: 1.8em; margin-top: 8px;">2,847,192</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">Real-time instances</div>
+                        </div>
+                        <div class="content-card" style="margin: 0;">
+                            <div class="data-label">SPOR SUBJECTS</div>
+                            <div class="data-value" style="font-size: 1.8em; margin-top: 8px;">1,208</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">Under monitoring</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(211, 153, 34, 0.1); border-radius: 6px; border-left: 3px solid var(--accent-warning);">
+                        <span style="color: var(--accent-warning); font-weight: 600;">NOTICE:</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">
+                            14 anomalous signals of unknown origin detected. Possible connection to Object-0 origin under investigation.
+                        </span>
+                    </div>
+                `
+            },
+            
+            'READ://OBJECT0': {
+                title: 'Artifact File: Object-0',
+                badge: 'classified',
+                content: `
+                    <div style="display: flex; gap: 16px; margin-bottom: 20px; align-items: center;">
+                        <div style="font-size: 3em; opacity: 0.3;">◉</div>
+                        <div>
+                            <div style="font-size: 1.5em; font-weight: 700; color: var(--text-primary);">"THE FALLING STAR"</div>
+                            <div style="color: var(--accent-danger); font-weight: 600; margin-top: 4px;">CLASSIFICATION: KETER</div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Discovery Date</div>
+                            <div class="data-value">12 October 2015</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Location</div>
+                            <div class="data-value">Sector-7, Tunguska Exclusion Zone</div>
+                        </div>
+                        <div class="data-item danger">
+                            <div class="data-label">AE Generation</div>
+                            <div class="data-value">1.2 Terawatts continuous</div>
+                        </div>
+                        <div class="data-item warning">
+                            <div class="data-label">Origin</div>
+                            <div class="data-value">Extraterrestrial (Non-human?)</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <div class="data-label" style="margin-bottom: 12px;">ANOMALOUS PROPERTIES</div>
+                        <ul class="feature-list">
+                            <li><strong>Material Catalysis:</strong> Transmutation of base elements</li>
+                            <li><strong>Ontological Destabilization:</strong> Creation of AEZ (Anomalous Effect Zones)</li>
+                            <li><strong>Unknown Symbols:</strong> Surface patterns do not match any known linguistic system</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div class="data-label" style="margin-bottom: 8px;">CONTAINMENT PROCEDURES</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9em; line-height: 1.8;">
+                            • Lead-tungsten alloy shell (1.5m thickness)<br>
+                            • Cryogenic cooling: -196°C<br>
+                            • Electromagnetic null-field generators<br>
+                            • 24-person monitoring team
+                        </div>
+                    </div>
+                `
+            },
+            
+            'READ://PROJECTANCHOR': {
+                title: 'Project Anchor',
+                badge: 'classified',
+                content: `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Initiated</div>
+                            <div class="data-value">Q4 2020</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Objective</div>
+                            <div class="data-value">AE Countermeasures</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Breakthrough</div>
+                            <div class="data-value">Q1 2021</div>
+                        </div>
+                        <div class="data-item warning">
+                            <div class="data-label">Survival Rate</div>
+                            <div class="data-value" style="color: var(--accent-warning);">23%</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 20px 0; padding: 16px; background: rgba(88, 166, 255, 0.1); border-radius: 8px; border-left: 3px solid var(--accent-primary);">
+                        <div style="font-weight: 600; color: var(--accent-primary); margin-bottom: 8px;">BREAKTHROUGH DISCOVERY</div>
+                        <div style="color: var(--text-secondary);">
+                            Haplogroup G-7 correlation with AE resistance identified. 
+                            <strong>37 candidates</strong> selected from 12,000 screened subjects.
+                        </div>
+                    </div>
+                    
+                    <div class="data-label" style="margin: 16px 0 8px;">GENERATION UNITS</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                        <div class="content-card" style="margin: 0; text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: 700; color: var(--accent-primary);">Gen-1</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">Prototypes</div>
+                            <div style="font-size: 0.8em; color: var(--accent-danger); margin-top: 8px;">P12-SPOR-037 ESCAPED</div>
+                        </div>
+                        <div class="content-card" style="margin: 0; text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: 700; color: var(--accent-primary);">Gen-2</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">Enhanced</div>
+                            <div style="font-size: 0.8em; color: var(--accent-success); margin-top: 8px;">12 Subjects</div>
+                        </div>
+                        <div class="content-card" style="margin: 0; text-align: center;">
+                            <div style="font-size: 1.5em; font-weight: 700; color: var(--text-muted);">Gen-3</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;">In Development</div>
+                            <div style="font-size: 0.8em; color: var(--accent-warning); margin-top: 8px;">Site Gamma</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(248, 81, 73, 0.1); border-radius: 6px; border-left: 3px solid var(--accent-danger);">
+                        <span style="color: var(--accent-danger); font-weight: 600;">WARNING:</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">
+                            R-12 causes severe physical/psychological trauma. Non-consensual human experimentation documented.
+                        </span>
+                    </div>
+                `
+            },
+            
+            'READ://TIMELINE/XM5-34T-GHR56-371': {
+                title: 'Audio Log: XM5-34T-GHR56-371',
+                badge: 'omega',
+                content: `
+                    <div class="audio-log">
+                        <div class="log-header">
+                            <div><span style="color: var(--text-muted);">DATE:</span> <span style="color: var(--accent-primary);">25.11.2020</span></div>
+                            <div><span style="color: var(--text-muted);">TIME:</span> <span style="color: var(--accent-primary);">14:32:07</span></div>
+                            <div><span style="color: var(--text-muted);">LOCATION:</span> <span style="color: var(--text-primary);">Director's Office</span></div>
+                        </div>
+                        
+                        <div class="log-entry speaker-director">
+                            <div class="log-speaker" style="color: var(--accent-primary);">DIRECTOR</div>
+                            <div class="log-text">The infection rates are unacceptable, Colonel. We're losing personnel faster than we can replace them.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">Sir, we've implemented all quarantine protocols. The R-12 exposure is...</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-director">
+                            <div class="log-speaker" style="color: var(--accent-primary);">DIRECTOR</div>
+                            <div class="log-text">I don't want excuses. I want solutions. Project Anchor is bleeding resources. Find me candidates.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">We've exhausted military channels. The screening process for G-7 haplogroup is...</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-director">
+                            <div class="log-speaker" style="color: var(--accent-primary);">DIRECTOR</div>
+                            <div class="log-text">Then look elsewhere. Police. Emergency services. Anyone with combat training and the right biology.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">That would require negotiating with governments...</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-director">
+                            <div class="log-speaker" style="color: var(--accent-primary);">DIRECTOR</div>
+                            <div class="log-text">Then negotiate. Or should I find someone who can? Don't disappoint me, Colonel. Failure is not a career option here. You know what "termination" means in Protocol 12.</div>
+                        </div>
+                        
+                        <div class="log-alert">[ END OF RECORDING ]</div>
+                    </div>
+                `
+            },
+            
+            'READ://TIMELINE/HT9-07B-TLA12-891': {
+                title: 'Audio Log: HT9-07B-TLA12-891 [CRITICAL]',
+                badge: 'classified',
+                content: `
+                    <div class="audio-log" style="border: 1px solid var(--accent-danger);">
+                        <div class="log-header">
+                            <div><span style="color: var(--text-muted);">DATE:</span> <span style="color: var(--accent-danger);">08.12.2021</span></div>
+                            <div><span style="color: var(--text-muted);">TIME:</span> <span style="color: var(--accent-danger);">03:17:44</span></div>
+                            <div><span style="color: var(--text-muted);">PRIORITY:</span> <span style="color: var(--accent-danger); font-weight: 700;">CRITICAL ALERT</span></div>
+                        </div>
+                        
+                        <div class="log-alert">[ SECURITY BREACH DETECTED ]</div>
+                        
+                        <div class="log-entry speaker-security">
+                            <div class="log-speaker" style="color: var(--accent-danger);">SECURITY</div>
+                            <div class="log-text" style="color: var(--accent-danger);">BREACH! BREACH! Subject P12-SPOR-037 has compromised containment!</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-control">
+                            <div class="log-speaker" style="color: var(--accent-success);">CONTROL</div>
+                            <div class="log-text">All units to Gamma-7. Lethal force authorized.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-security">
+                            <div class="log-speaker" style="color: var(--accent-danger);">SECURITY</div>
+                            <div class="log-text">He's moving too fast! He's... he's not slowing down! What the hell did you people do to him?</div>
+                        </div>
+                        
+                        <div class="log-alert">[ GUNFIRE DETECTED ]</div>
+                        
+                        <div class="log-entry speaker-security">
+                            <div class="log-speaker" style="color: var(--accent-danger);">SECURITY</div>
+                            <div class="log-text">Shots fired! Subject is hit but still moving! He's... oh god, he's healing!</div>
+                        </div>
+                        
+                        <div class="log-alert">[ EXPLOSION DETECTED ]</div>
+                        
+                        <div class="log-entry speaker-control">
+                            <div class="log-speaker" style="color: var(--accent-success);">CONTROL</div>
+                            <div class="log-text">All stations, lockdown protocol Omega. I repeat, Omega lockdown.</div>
+                        </div>
+                        
+                        <div class="log-alert" style="background: rgba(248, 81, 73, 0.2);">[ SIGNAL LOST ]</div>
+                        
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+                                <div class="data-item danger">
+                                    <div class="data-label">CONFIRMED DEAD</div>
+                                    <div class="data-value" style="color: var(--accent-danger); font-size: 1.5em;">75</div>
+                                </div>
+                                <div class="data-item warning">
+                                    <div class="data-label">UNACCOUNTED FOR</div>
+                                    <div class="data-value" style="color: var(--accent-warning); font-size: 1.5em;">389</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            
+            'READ://TIMELINE/TY2-47H-UHT01-502': {
+                title: 'Audio Log: TY2-47H-UHT01-502',
+                badge: 'omega',
+                content: `
+                    <div class="audio-log">
+                        <div class="log-header">
+                            <div><span style="color: var(--text-muted);">DATE:</span> <span style="color: var(--accent-primary);">08.12.2021</span></div>
+                            <div><span style="color: var(--text-muted);">TIME:</span> <span style="color: var(--accent-primary);">02:45:12</span></div>
+                            <div><span style="color: var(--text-muted);">LOCATION:</span> <span style="color: var(--text-primary);">Site Gamma, Briefing Room 3</span></div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">This is Colonel Davidson with the daily security brief. All Project Anchor personnel report to stations. We have...</div>
+                        </div>
+                        
+                        <div class="log-alert">[ INTERRUPTION ]</div>
+                        
+                        <div class="log-entry speaker-tech">
+                            <div class="log-speaker" style="color: var(--text-secondary);">TECHNICIAN</div>
+                            <div class="log-text">Sir, we're picking up unusual readings from Subject 037's cell.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">Define "unusual."</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-tech">
+                            <div class="log-speaker" style="color: var(--text-secondary);">TECHNICIAN</div>
+                            <div class="log-text">AE levels are spiking. He's... sir, he's conscious. The sedation should have lasted another four hours.</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-warning);">COLONEL DAVIDSON</div>
+                            <div class="log-text">Double the dose. And get a medical team down there. If he's showing signs of rejection...</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-tech">
+                            <div class="log-speaker" style="color: var(--accent-danger);">TECHNICIAN</div>
+                            <div class="log-text" style="color: var(--accent-danger);">Sir! Cameras just went down in Sector 4!</div>
+                        </div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-danger);">COLONEL DAVIDSON</div>
+                            <div class="log-text" style="color: var(--accent-danger);">Security to Sector 4! Now!</div>
+                        </div>
+                        
+                        <div class="log-alert">[ ALARM TRIGGERED ]</div>
+                        
+                        <div class="log-entry speaker-colonel">
+                            <div class="log-speaker" style="color: var(--accent-danger);">COLONEL DAVIDSON</div>
+                            <div class="log-text" style="color: var(--accent-danger);">This is not a drill! All units to high alert! Subject 037 is...</div>
+                        </div>
+                        
+                        <div class="log-alert">[ RECORDING INTERRUPTED ]</div>
+                    </div>
+                `
+            }
+        };
+
+        // Boot sequence
+        const bootLines = [
+            { text: "Initializing F.A.C.S. kernel...", type: "processing" },
+            { text: "Loading quantum encryption modules...", type: "processing" },
+            { text: "Establishing secure handshake...", type: "processing" },
+            { text: "Verifying OMEGA clearance credentials...", type: "processing" },
+            { text: "Connection established", type: "success" },
+            { text: "Bypassing standard protocols...", type: "success" },
+            { text: "Emergency access granted", type: "success" },
+            { text: "Loading interface...", type: "processing" }
+        ];
 
         document.addEventListener('DOMContentLoaded', function() {
-            const securityOverlay = document.getElementById('security-overlay');
-            const hackOutput = document.getElementById('hack-output');
-            const passwordGrid = document.getElementById('password-grid');
-            const attemptsCount = document.getElementById('attempts-count');
-            const attemptsCounter = document.getElementById('attempts-counter');
-            const securityAlert = document.getElementById('security-alert');
-            const hackInput = document.getElementById('hack-input');
+            runBootSequence();
+        });
+
+        function runBootSequence() {
+            const bootText = document.getElementById('bootText');
+            const bootProgressBar = document.getElementById('bootProgressBar');
+            const bootOverlay = document.getElementById('bootOverlay');
+            const terminal = document.getElementById('terminal');
             
+            let delay = 0;
+            const totalDelay = 3000;
+            
+            bootLines.forEach((line, index) => {
+                delay += 300 + Math.random() * 200;
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.className = `boot-line ${line.type}`;
+                    div.style.animationDelay = '0s';
+                    div.textContent = line.text;
+                    bootText.appendChild(div);
+                    
+                    const progress = ((index + 1) / bootLines.length) * 100;
+                    bootProgressBar.style.width = `${progress}%`;
+                }, delay);
+            });
+            
+            setTimeout(() => {
+                bootOverlay.classList.add('hidden');
+                terminal.classList.remove('hidden');
+                showWelcome();
+            }, 3500);
+        }
+
+        function showWelcome() {
             const output = document.getElementById('output');
-            const commandInput = document.getElementById('command-input');
-            const currentTimeElement = document.getElementById('current-time');
-            const lastLoginTimeElement = document.getElementById('last-login-time');
-            const soundToggle = document.getElementById('sound-toggle');
-            const scanLine = document.getElementById('scan-line');
-            const staticOverlay = document.getElementById('static-overlay');
+            const welcomeHTML = `
+                <div class="command-line-entry">
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 1.1em; color: var(--accent-primary); font-weight: 600; margin-bottom: 8px;">
+                            Welcome to Protocol 12 Terminal
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.9em;">
+                            Secure connection established. Clearance level: <span style="color: var(--accent-danger); font-weight: 600;">OMEGA</span>
+                        </div>
+                    </div>
+                    
+                    <div class="welcome-grid">
+                        <div class="welcome-card" onclick="simulateCommand('READ://PROTOCOL12')">
+                            <h3>📋 Organization</h3>
+                            <p>Protocol 12 overview and core objectives</p>
+                        </div>
+                        <div class="welcome-card" onclick="simulateCommand('READ://DOSSIER')">
+                            <h3>👤 Subject File</h3>
+                            <p>P12-SPOR-037 (Michael Anderson)</p>
+                        </div>
+                        <div class="welcome-card" onclick="simulateCommand('READ://TIMELINE')">
+                            <h3>📅 Chronology</h3>
+                            <p>Key events and timeline</p>
+                        </div>
+                        <div class="welcome-card" onclick="simulateCommand('READ://OBJECT0')">
+                            <h3>⚠️ Object-0</h3>
+                            <p>KETER-class artifact file</p>
+                        </div>
+                        <div class="welcome-card" onclick="simulateCommand('READ://PROJECTANCHOR')">
+                            <h3>🔬 Project Anchor</h3>
+                            <p>Generation units and R-12 research</p>
+                        </div>
+                        <div class="welcome-card" onclick="simulateCommand('READ://FACS')">
+                            <h3>🌐 F.A.C.S. Network</h3>
+                            <p>Global monitoring status</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 12px; background: var(--bg-primary); border-radius: 6px; font-size: 0.85em; color: var(--text-muted);">
+                        Type <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 3px; color: var(--accent-primary);">HELP</code> for all available commands or click any card above.
+                    </div>
+                </div>
+            `;
             
-            let audioContext = null;
-            let soundEnabled = true;
-            let attemptsRemaining = 4;
-            let correctPassword = '';
-            let isSecurityActive = true;
-            let glitchInterval;
+            output.innerHTML = welcomeHTML;
+        }
 
-            // ==================== YNROQ!2654124 ====================
+        function simulateCommand(cmd) {
+            document.getElementById('commandInput').value = cmd;
+            processCommand(cmd);
+        }
+
+        // Command processing
+        const commandInput = document.getElementById('commandInput');
+        const output = document.getElementById('output');
+        const mainContent = document.getElementById('mainContent');
+
+        commandInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const command = this.value.trim().toUpperCase();
+                this.value = '';
+                processCommand(command);
+            }
+        });
+
+        function processCommand(command) {
+            // Add command to output
+            const entry = document.createElement('div');
+            entry.className = 'command-line-entry';
+            entry.innerHTML = `
+                <div class="command-prompt">
+                    <span class="prompt-symbol">❯</span>
+                    <span class="command-text">${command}</span>
+                </div>
+            `;
             
-            function initGlitchEffects() {
-                // NW234762394NT
-                scanLine.style.display = 'block';
-                staticOverlay.style.display = 'block';
-                
-                // HROUW6428974
-                setInterval(() => {
-                    if (Math.random() > 0.7 && !isSecurityActive) {
-                        document.body.classList.add('flicker');
-                        setTimeout(() => {
-                            document.body.classList.remove('flicker');
-                        }, 100);
-                    }
-                }, 5000);
-                
-                // HW73496572HG
-                glitchInterval = setInterval(() => {
-                    if (Math.random() > 0.8 && !isSecurityActive && output.children.length > 0) {
-                        const elements = output.querySelectorAll('p, .response, .document, .classified');
-                        if (elements.length > 0) {
-                            const randomElement = elements[Math.floor(Math.random() * elements.length)];
-                            randomElement.classList.add('corruption');
-                            setTimeout(() => {
-                                randomElement.classList.remove('corruption');
-                            }, 800);
-                        }
-                    }
-                }, 6000);
-                
-                // HT1236240358H
-                setInterval(() => {
-                    if (Math.random() > 0.9 && !isSecurityActive) {
-                        staticOverlay.style.opacity = '0.1';
-                        setTimeout(() => {
-                            staticOverlay.style.opacity = '0.05';
-                        }, 100);
-                    }
-                }, 8000);
-            }
-
-            function disableGlitchEffects() {
-                clearInterval(glitchInterval);
-                scanLine.style.display = 'none';
-                staticOverlay.style.display = 'none';
-            }
-
-            // ==================== ONLY SYSTEM ADMINS! ====================
-
-            // HG28340235TY
-            function initSecuritySystem() {
-                if (isSecurityActive) {
-                    showSecurityOverlay();
-                    generatePasswordGame();
-                }
-            }
-
-            function showSecurityOverlay() {
-                securityOverlay.style.display = 'flex';
-                commandInput.disabled = true;
-                hackInput.focus();
-                disableGlitchEffects();
-            }
-
-            function hideSecurityOverlay() {
-                securityOverlay.style.display = 'none';
-                commandInput.disabled = false;
-                commandInput.focus();
-                initGlitchEffects();
-            }
-
-            function generatePasswordGame() {
-                passwordGrid.innerHTML = '';
-                const passwords = generatePasswords();
-                correctPassword = passwords.correct;
-                
-                passwords.all.forEach(password => {
-                    const option = document.createElement('div');
-                    option.className = 'password-option';
-                    option.textContent = password;
-                    option.addEventListener('click', () => checkPassword(password, option));
-                    passwordGrid.appendChild(option);
-                });
-                
-                updateAttemptsDisplay();
-            }
-
-            function generatePasswords() {
-                const wordList = [
-                    'QUANTUM', 'SILENCE', 'PROTOCOL', 'ANCHOR', 'FACS', 
-                    'OBJECT0', 'ANDERSON', 'PROMETHEUS', 'SECURITY', 'SYSTEM',
-                    'TERMINAL', 'ACCESS', 'CONTROL', 'BREACH', 'LOCKDOWN',
-                    'PASSWORD', 'ENCRYPT', 'DECODE', 'CYPHER', 'MATRIX'
-                ];
-                
-                const correct = wordList[Math.floor(Math.random() * wordList.length)];
-                const allPasswords = [correct];
-                
-                while (allPasswords.length < 12) {
-                    const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
-                    if (!allPasswords.includes(randomWord)) {
-                        allPasswords.push(randomWord);
-                    }
-                }
-                
-                for (let i = allPasswords.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allPasswords[i], allPasswords[j]] = [allPasswords[j], allPasswords[i]];
-                }
-                
-                return { correct, all: allPasswords };
-            }
-
-            function checkPassword(password, element) {
-                if (password === correctPassword) {
-                    element.classList.add('correct');
-                    addHackOutput('PASSWORD ACCEPTED. GRANTING ACCESS...', '#0f0');
-                    setTimeout(() => {
-                        addHackOutput('SECURITY SYSTEM DISABLED. WELCOME, ADMIN.', '#0f0');
-                        setTimeout(() => {
-                            isSecurityActive = false;
-                            hideSecurityOverlay();
-                            playSuccessSound();
-                        }, 1500);
-                    }, 1000);
-                } else {
-                    attemptsRemaining--;
-                    element.classList.add('incorrect');
-                    addHackOutput(`INCORRECT PASSWORD: "${password}". ACCESS DENIED.`, '#f00');
-                    
-                    if (attemptsRemaining <= 0) {
-                        addHackOutput('MAXIMUM ATTEMPTS EXCEEDED. SYSTEM LOCKDOWN INITIATED.', '#f00');
-                        addHackOutput('PLEASE CONTACT SYSTEM ADMINISTRATOR.', '#ff0');
-                        setTimeout(() => {
-                            window.location.href = 'about:blank';
-                        }, 3000);
-                    } else {
-                        updateAttemptsDisplay();
-                        setTimeout(() => {
-                            generatePasswordGame();
-                        }, 1000);
-                    }
-                }
-            }
-
-            function updateAttemptsDisplay() {
-                attemptsCount.textContent = attemptsRemaining;
-                attemptsCounter.textContent = `SECURITY LEVEL: ${getSecurityLevel()} | ${getWarningMessage()}`;
-                
-                if (attemptsRemaining <= 1) {
-                    securityAlert.style.display = 'block';
-                } else {
-                    securityAlert.style.display = 'none';
-                }
-            }
-
-            function getSecurityLevel() {
-                switch(attemptsRemaining) {
-                    case 4: return 'LOW';
-                    case 3: return 'MEDIUM';
-                    case 2: return 'HIGH';
-                    case 1: return 'MAXIMUM';
-                    default: return 'LOCKDOWN';
-                }
-            }
-
-            function getWarningMessage() {
-                switch(attemptsRemaining) {
-                    case 4: return 'SECURE';
-                    case 3: return 'MONITORED';
-                    case 2: return 'ALERT';
-                    case 1: return 'LOCKOUT IMMINENT';
-                    default: return 'SYSTEM LOCKED';
-                }
-            }
-
-            function addHackOutput(text, color = '#0f0') {
-                const div = document.createElement('div');
-                div.textContent = text;
-                div.style.color = color;
-                hackOutput.appendChild(div);
-                hackOutput.scrollTop = hackOutput.scrollHeight;
-            }
-
-            // HTWTHW7234HTG
-            hackInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    const input = hackInput.value.trim().toUpperCase();
-                    
-                    if (input === ADMIN_OVERRIDE_COMMAND) {
-                        addHackOutput('ADMIN OVERRIDE ACCEPTED. DISABLING SECURITY...', '#0f0');
-                        setTimeout(() => {
-                            isSecurityActive = false;
-                            hideSecurityOverlay();
-                            playSuccessSound();
-                        }, 1000);
-                    } else if (input === 'ADMIN_OVERRIDE') {
-                        addHackOutput('INVALID OVERRIDE CODE. TRY: ' + ADMIN_OVERRIDE_COMMAND, '#ff0');
-                    }
-                    
-                    hackInput.value = '';
-                }
-            });
-
-            // ==================== NOT NECESSARY ====================
-            
-            function initAudioContext() {
-                try {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                } catch (e) {
-                    console.log('Web Audio API not supported');
-                    soundEnabled = false;
-                    soundToggle.textContent = '🔇 Sound OFF';
-                }
-            }
-
-            function createBeepSound(duration, frequency, volume, type = 'sine', fadeOut = true) {
-                if (!soundEnabled || !audioContext) return;
-                
-                try {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.value = frequency;
-                    oscillator.type = type;
-                    
-                    const now = audioContext.currentTime;
-                    
-                    gainNode.gain.setValueAtTime(0, now);
-                    gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
-                    
-                    if (fadeOut) {
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
-                    } else {
-                        gainNode.gain.setValueAtTime(volume, now);
-                        gainNode.gain.linearRampToValueAtTime(0, now + duration);
-                    }
-                    
-                    oscillator.start(now);
-                    oscillator.stop(now + duration);
-                } catch (e) {
-                    console.log('Audio error:', e);
-                }
-            }
-
-            function playTypingSound() {
-                createBeepSound(0.08, 800 + Math.random() * 400, 0.1, 'square');
-            }
-
-            function playEnterSound() {
-                createBeepSound(0.2, 600, 0.3, 'sine');
-            }
-
-            function playErrorSound() {
-                createBeepSound(0.3, 300, 0.4, 'sawtooth');
-                setTimeout(() => {
-                    createBeepSound(0.2, 250, 0.3, 'sawtooth');
-                }, 150);
-            }
-
-            function playSuccessSound() {
-                createBeepSound(0.15, 800, 0.2, 'sine');
-                setTimeout(() => {
-                    createBeepSound(0.1, 1000, 0.15, 'sine');
-                }, 100);
-            }
-
-            function playAlertSound() {
-                createBeepSound(0.3, 200, 0.3, 'square', false);
-                setTimeout(() => {
-                    createBeepSound(0.2, 150, 0.25, 'square', false);
-                }, 100);
-            }
-
-            // ==================== ONLY SYSTEM ADMINS! ====================
-            
-            soundToggle.addEventListener('click', function() {
-                soundEnabled = !soundEnabled;
-                soundToggle.textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
-                
-                if (soundEnabled && !audioContext) {
-                    initAudioContext();
-                }
-            });
-
-            document.addEventListener('click', function initAudioOnInteraction() {
-                if (soundEnabled && !audioContext) {
-                    initAudioContext();
-                }
-                document.removeEventListener('click', initAudioOnInteraction);
-            });
-
-            function updateTime() {
-                const now = new Date();
-                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
-                currentTimeElement.textContent = utcTime;
-            }
-
-            function setLastLoginTime() {
-                const now = new Date();
-                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
-                lastLoginTimeElement.textContent = utcTime;
-            }
-
-            setLastLoginTime();
-            updateTime();
-            setInterval(updateTime, 1000);
-
-            // TH72354KO
-            setTimeout(() => {
-                initSecuritySystem();
-            }, 2000);
-
-            // TKN736342O
-            let commandHistory = [];
-            let historyIndex = -1;
-
-            setTimeout(() => {
-                if (!isSecurityActive) {
-                    addOutput("System ready. Awaiting command.", false, true);
-                    playSuccessSound();
-                }
-            }, 1000);
-
-            let typingTimeout;
-            commandInput.addEventListener('input', function() {
-                if (commandInput.value.length > 0 && !isSecurityActive) {
-                    clearTimeout(typingTimeout);
-                    playTypingSound();
-                    typingTimeout = setTimeout(() => {
-                        createBeepSound(0.05, 600, 0.05, 'sine');
-                    }, 100);
-                }
-            });
-
-            commandInput.addEventListener('keydown', function(e) {
-                if (isSecurityActive) return;
-                
-                if (e.key === 'Enter') {
-                    playEnterSound();
-                    const command = commandInput.value.trim();
-                    
-                    if (command) {
-                        addOutput(`> ${command}`, false, false);
-                        processCommand(command.toUpperCase());
-                        commandHistory.push(command);
-                        historyIndex = commandHistory.length;
-                        commandInput.value = '';
-                    }
-                } else if (e.key === 'ArrowUp') {
-                    createBeepSound(0.1, 500, 0.1);
-                    e.preventDefault();
-                    if (commandHistory.length > 0) {
-                        if (historyIndex > 0) {
-                            historyIndex--;
-                        }
-                        commandInput.value = commandHistory[historyIndex] || '';
-                    }
-                } else if (e.key === 'ArrowDown') {
-                    createBeepSound(0.1, 400, 0.1);
-                    e.preventDefault();
-                    if (historyIndex < commandHistory.length - 1) {
-                        historyIndex++;
-                        commandInput.value = commandHistory[historyIndex] || '';
-                    } else {
-                        historyIndex = commandHistory.length;
-                        commandInput.value = '';
-                    }
-                } else if (e.key.length === 1) {
-                    createBeepSound(0.05, 1000 + Math.random() * 200, 0.08, 'square');
-                }
-            });
-
-            function addOutput(text, isHtml = false, animate = false) {
-                const p = document.createElement('p');
-                if (isHtml) {
-                    p.innerHTML = text;
-                } else {
-                    p.textContent = text;
-                }
-                
-                if (animate) {
-                    p.classList.add('fade-in');
-                }
-                
-                output.appendChild(p);
-                output.scrollTop = output.scrollHeight;
-            }
-
-            function processCommand(cmd) {
-                const cleanCmd = cmd.replace(/^READ:\/\//, '');
-                
-                switch(cleanCmd) {
-                    case 'PROTOCOL12':
-                        playSuccessSound();
-                        showProtocolInfo();
-                        break;
-                    case 'FACS':
-                        playSuccessSound();
-                        showFACSInfo();
-                        break;
-                    case 'OBJECT0':
-                        playSuccessSound();
-                        showObject0Info();
-                        break;
-                    case 'PROJECTANCHOR':
-                        playSuccessSound();
-                        showProjectAnchor();
-                        break;
-                    case 'TIMELINE':
-                        playSuccessSound();
-                        showTimeline();
-                        break;
-                    case 'TIMELINE/XM5-34T-GHR56-371':
-                        playAlertSound();
-                        setTimeout(() => showTimelineRecording(), 300);
-                        break;
-                    case 'TIMELINE/HT9-07B-TLA12-891':
-                        playAlertSound();
-                        setTimeout(() => showTimelineAlert(), 500);
-                        break;
-                    case 'TIMELINE/TY2-47H-UHT01-502':
-                        playAlertSound();
-                        setTimeout(() => showTimelineReport(), 400);
-                        break;
-                    case 'DOSSIER':
-                        playSuccessSound();
-                        showDossier();
-                        break;
-                    case 'CLEAR':
-                        createBeepSound(0.2, 300, 0.2);
-                        clearTerminal();
-                        break;
-                    case 'HELP':
-                        playSuccessSound();
-                        showHelp();
-                        break;
-                    case 'TIME':
-                        createBeepSound(0.1, 600, 0.1);
-                        showCurrentTime();
-                        break;
-                    default:
-                        playErrorSound();
-                        addOutput(`Command not recognized: ${cmd}`);
-                        addOutput("Type HELP for available commands");
-                }
-            }
-
-            // KOP23486243M
-            function showHelp() {
-                addOutput("<div class='response'><div class='response-title'>AVAILABLE COMMANDS</div><div class='command-list'><div class='command-item'>READ://PROTOCOL12 - Protocol 12 organizational overview</div><div class='command-item'>READ://FACS - F.A.C.S. network information</div><div class='command-item'>READ://OBJECT0 - Object-0 research archives</div><div class='command-item'>READ://PROJECTANCHOR - Project Anchor research initiative</div><div class='command-item'>READ://TIMELINE - Event chronology and audio logs</div><div class='command-item'>READ://DOSSIER - Subject dossier: Anderson, Michael J.</div><div class='command-item'>TIME - Display current UTC time</div><div class='command-item'>CLEAR - Clear terminal</div></div><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showCurrentTime() {
-                const now = new Date();
-                const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + 'Z';
-                addOutput(`<div class='response'><div class='response-title'>CURRENT SYSTEM TIME</div><p>UTC Time: <span class='timestamp'>${utcTime}</span></p><p>System uptime: 94.7%</p><p>F.A.C.S. synchronization: ACTIVE</p><div class='system-info'>[TIME SYNCHRONIZED]</div></div>`, true);
-            }
-
-            function showProtocolInfo() {
-                addOutput("<div class='response'><div class='response-title'>PROTOCOL 12 ORGANIZATIONAL OVERVIEW</div><p>Protocol 12 is a multinational special operations and research organization established under the Global Security Accord of 2016. Our primary mission is the containment, study, and application of anomalous phenomena and artifacts for global security purposes.</p><div class='document'><div class='document-title'>SECURITY NOTICE - DIRECTIVE 12.7.4</div><p>All personnel are reminded that unauthorized access to Protocol 12 systems constitutes a violation of the National Security Act and is punishable by immediate termination. Any attempt to copy, transmit, or disseminate classified information will result in severe penalties.</p></div><div class='classified'><p><strong>CLASSIFIED:</strong> The events of 2020-2025 remain under information blackout per Executive Order 17-2025. Public knowledge of these events is strictly prohibited.</p></div><p><strong>Current Status:</strong> As of Q3 2025, Protocol 12 maintains operational control over 72% of global containment zones. Research into Object-0 applications continues under Project Prometheus.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showFACSInfo() {
-                addOutput("<div class='response'><div class='response-title'>FIELD AUTONOMOUS CONTROLLED STRUCTURE (F.A.C.S.)</div><p>The F.A.C.S. network is Protocol 12's global monitoring and communications infrastructure, established to maintain operational capacity during the global crisis.</p><div class='document'><div class='document-title'>SYSTEM OVERVIEW</div><p>F.A.C.S. utilizes a distributed network of micro-AE generators deployed across 287 satellite platforms and 1,204 ground stations. This system creates stable energy bridges that maintain global communications and surveillance capabilities despite the collapse of conventional infrastructure.</p></div><p><strong>System Capabilities:</strong></p><p>• Global Surveillance: F.A.C.S. monitors AEZ expansion, mutant activity patterns, and survivor movements</p><p>• Information Control: All internet traffic is routed through F.A.C.S. filters with AI-generated simulacra</p><p>• Field Testing: The network broadcasts targeted AE stimuli to identified subjects</p><div class='classified'><p><strong>CLASSIFIED:</strong> F.A.C.S. has detected 14 anomalous signals of unknown origin since activation. Research teams are investigating potential extraterrestrial connections to Object-0.</p></div><p><strong>Operational Statistics:</strong></p><p>Network Status: OPERATIONAL (94.7% capacity)</p><p>Active Simulacra: 2,847,192</p><p>Identified SPOR Subjects: 1,208</p><p>AE Stimuli Broadcasts: 14,772 daily average</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showObject0Info() {
-                addOutput("<div class='response'><div class='response-title'>OBJECT-0 RESEARCH ARCHIVES</div><p>Designation: Object-0 (Codename: 'Falling Star')</p><p>Classification: KETER</p><p>Recovery Date: October 12, 2015</p><p>Location: Sector-7 (67°24'N, 135°15'W)</p><div class='document'><div class='document-title'>RESEARCH SUMMARY</div><p>Object-0 is a meteorite of extraterrestrial origin recovered from the Tunguska Exclusion Zone. It possesses unprecedented energy-generating capabilities and demonstrates reality-altering properties when activated.</p></div><p><strong>Key Properties:</strong></p><p>• Anomalous Energy (AE) Emission: 1.2 terawatts of clean energy</p><p>• Material Catalyzation: AE exposure alters material properties at molecular level</p><p>• Ontological Destabilization: Creates Anomalous Effect Zones (AEZ)</p><div class='classified'><p><strong>CLASSIFIED:</strong> Research indicates Object-0 may be a technological artifact. Symbols etched on its surface match no known human language.</p></div><p><strong>Containment Procedures:</strong></p><p>• 1.5m thick lead-tungsten alloy shielding</p><p>• Continuous cryogenic cooling at -196°C</p><p>• Electromagnetic null-field generators</p><p>• 24/7 monitoring by AE sensors</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showProjectAnchor() {
-                addOutput("<div class='response'><div class='response-title'>PROJECT ANCHOR RESEARCH INITIATIVE</div><p>Project Anchor is a classified research program initiated in Q4 2020 with the objective of developing countermeasures against Ontological Destabilization effects caused by Object-0 emissions.</p><div class='document'><div class='document-title'>PROJECT GOALS</div><p>1. Identify individuals with innate resistance to AE exposure (SPOR subjects)</p><p>2. Enhance resistance capabilities through controlled exposure and Reagent-12 treatments</p><p>3. Develop deployable 'Anchor' units capable of stabilizing AEZ</p></div><p><strong>Research Breakthrough:</strong></p><p>In Q1 2021, researchers discovered that certain genetic markers (G-7 haplogroup) correlate with AE resistance. Of 12,000 screened subjects, 37 demonstrated significant resistance.</p><div class='classified'><p><strong>CLASSIFIED:</strong> Reagent-12 (R-12) was developed as a catalytic stabilizer. Initial field tests showed promising results but led to catastrophic consequences when combined with the global viral pathogen.</p></div><p><strong>Current Status:</strong></p><p>Project Anchor continues despite the global crisis. The development of Generation-3 Anchor units is underway at Facility Gamma. Field testing authorized in AEZ-7.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showTimeline() {
-                addOutput("<div class='response'><div class='response-title'>EVENT CHRONOLOGY</div><p><strong>OCT 12, 2015:</strong> Object-0 recovered in Siberia. Protocol 12 established.</p><p><strong>MAR 19, 2020:</strong> Global viral pandemic declared.</p><p><strong>SEP 03, 2020:</strong> Reagent-12 development completed.</p><p><strong>NOV 17, 2020:</strong> Catastrophic containment failure at Facility Alpha.</p><p><strong>JAN 15, 2021:</strong> Project Anchor initiated. Sergeant Michael Anderson brought into program.</p><p><strong>APR 22, 2021:</strong> First confirmed Anomalous Effect Zone (AEZ-1).</p><p><strong>DEC 08, 2021:</strong> Security breach at Facility Gamma. Subject Anderson escapes.</p><p><strong>JUN 30, 2022:</strong> Global F.A.C.S. network activated.</p><p><strong>MAR 15, 2025:</strong> Subject Anderson reappears, establishing unauthorized communications.</p><p><strong>AUG 02, 2025:</strong> AEZ coverage reaches 38% of terrestrial surface.</p><div class='classified'><p><strong>CLASSIFIED:</strong> Timeline entries for Q4 2022 - Q1 2025 are restricted to Level 10 personnel.</p></div><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function showTimelineRecording() {
-                addOutput("<div class='response'><div class='response-title'>AUDIO LOG RECORDING - XM5-34T-GHR56-371</div><div class='audio-log'><div class='audio-log-title'>Recording 25.11.2020</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> I hear you, Director</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> Colonel, what the # is going on with the rising number of R-12 infected? I ordered you to completely quarantine all cities and eliminate all infection sources</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Director, my people are doing everything possible, but we have a shortage of 'personnel'. Finding talented specialists from UN forces is a very problematic task</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> Then I'm listening to your ideas, or I'll be forced to take measures to appoint someone else as Colonel. You know we don't have former Colonels, right?</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Sir, I have a proposal to engage the police. They have sufficient personnel to block most streets</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> And how do you propose to hide this? You # want to declassify us?</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> ... We can negotiate with the current presidents of countries belonging to the UN</div><div class='dialogue'><span class='dialogue-speaker'>Director:</span> I'll negotiate with them. Keep in mind, if information about PROTOCOL12 leaks beyond the highest authorities, I will immediately 'replace' the Colonel personally... you're dismissed</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Yes, Director...</div></div><div class='system-info'>END OF RECORDING</div></div>", true);
-            }
-
-            function showTimelineAlert() {
-                createBeepSound(0.3, 200, 0.2);
-                setTimeout(() => {
-                    createBeepSound(0.2, 300, 0.15);
-                }, 100);
-                
-                addOutput("<div class='response'><div class='response-title'>SECURITY ALERT RECORDING - HT9-07B-TLA12-891</div><div class='audio-log'><div class='audio-log-title'>Recording 08.12.2021</div><div class='alert-message'>- TO ALL PERSONNEL, SECURITY CONDITIONS HAVE BEEN VIOLATED IN THE 'GAMMA' SCIENTIFIC COMPLEX. ALL NON-MILITARIZED PERSONNEL PLEASE PROCEED TO THE SAFE ZONE FOR EVACUATION</div><div class='alert-stats'>- AT THIS MOMENT ON THE COMPLEX TERRITORY COUNTED:<br>75 DECEASED<br>389 UNIDENTIFIED SUBJECTS.</div><div class='alert-message'>- TO ALL PERSONNEL, ON THE TERRITORY OF THE 'GAMMA' SCIENTIFIC COMPLEX, THE ESCAPE OF OBJECT '#####' HAS BEEN REGISTERED. ALL MILITARIZED PERSONNEL: IMMEDIATELY LOCATE AND RETURN THE OBJECT TO THE EXPERIMENTATION CHAMBER</div><div class='alert-message'>MESSAGE WILL REPEAT UNTIL ALARM DEACTIVATION OR DEACTIVATION <span class='corrupted-text'>#$&)!@_$%!@(*-^$&^$....</span></div></div><div class='system-info'>END OF TRANSMISSION - SIGNAL CORRUPTED</div></div>", true);
-            }
-
-            function showTimelineReport() {
-                addOutput("<div class='response'><div class='response-title'>COLONEL REPORT - TY2-47H-UHT01-502</div><div class='audio-log'><div class='audio-log-title'>Recording 08.12.2021</div><div class='report'>- Report from Colonel Mark Davidson #####, No. 11</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> GAMMA complex security status: all militarized personnel at full readiness. 'Jammers' operating at full capacity. External fortifications weak, inside the complex - everything in order, project status...</div><div class='alert-message'>- TO ALL PERSONNEL, SECURITY CONDITIONS HAVE BEEN VIOLATED IN THE 'GAMMA' SCIENTIFIC COMPLEX. ALL NON-MILITARIZED PERSONNEL PLEASE PROCEED TO THE SAFE ZONE FOR EVACUATION</div><div class='dialogue'><span class='dialogue-speaker'>Colonel Mark D.:</span> Sons of #, what the # is going on there?!</div></div><div class='system-info'>END OF TRANSMISSION</div></div>", true);
-            }
-
-            function showDossier() {
-                addOutput("<div class='response'><div class='response-title'>SUBJECT DOSSIER: ANDERSON, MICHAEL J.</div><p><strong>NAME:</strong> Anderson, Michael James</p><p><strong>ID:</strong> P12-SPOR-037</p><p><strong>STATUS:</strong> ACTIVE - PRIORITY TARGET (CODE PHOENIX)</p><p><strong>CLEARANCE:</strong> TERMINATED</p><p><strong>LAST KNOWN LOCATION:</strong> AEZ-9 (QUADRANT 7)</p><p><strong>SPECIAL DESIGNATION:</strong> GENERATION-1 ANCHOR UNIT</p><p><strong>Background:</strong></p><p>Subject Anderson is a former police sergeant recruited into Protocol 12 following the 2020 containment crisis. Genetic screening identified him as a SPOR candidate (G-7 haplogroup with 97.8% resistance marker expression).</p><p><strong>Project Anchor Participation:</strong></p><p>• 14 R-12 intravenous infusion sessions</p><p>• Controlled AE exposure (total 142 minutes)</p><p>• Cognitive restructuring therapy</p><p>• Physical enhancement protocols</p><div class='classified'><p><strong>CLASSIFIED:</strong> Subject demonstrated spontaneous AEZ stabilization abilities during Test 37, exceeding all projections. Designated as perfect Generation-1 Anchor unit.</p></div><p><strong>Current Threat Assessment:</strong></p><p>• Knowledge of Protocol 12 operations and facilities</p><p>• Unauthorized access to F.A.C.S. network</p><p>• Attempts to contact other survivors</p><p>• Potential to reveal Object-0 existence</p><p><strong>Directive:</strong> Capture alive for reconditioning and research. Lethal force authorized only if capture proves impossible.</p><div class='system-info'>[END OF TRANSMISSION]</div></div>", true);
-            }
-
-            function clearTerminal() {
+            // Remove empty state if exists
+            if (output.children.length === 1 && output.children[0].querySelector('.welcome-grid')) {
                 output.innerHTML = '';
-                addOutput("Terminal cleared.");
-                addOutput("Enter command to access secure database.");
             }
+            
+            if (command === 'CLEAR') {
+                output.innerHTML = '';
+                return;
+            } else if (command === 'TIME') {
+                const now = new Date();
+                entry.innerHTML += `
+                    <div class="content-card">
+                        <div class="data-grid" style="grid-template-columns: repeat(2, 1fr); margin: 0;">
+                            <div>
+                                <div class="data-label">UTC Time</div>
+                                <div class="data-value">${now.toISOString()}</div>
+                            </div>
+                            <div>
+                                <div class="data-label">Local Time</div>
+                                <div class="data-value">${now.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (command === 'HELP') {
+                entry.innerHTML += `
+                    <div class="content-card">
+                        <div class="data-label" style="margin-bottom: 12px;">AVAILABLE COMMANDS</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9em;">
+                            <code style="color: var(--accent-primary);">READ://PROTOCOL12</code>
+                            <code style="color: var(--accent-primary);">READ://SOURCES</code>
+                            <code style="color: var(--accent-primary);">READ://DOSSIER</code>
+                            <code style="color: var(--accent-primary);">READ://TIMELINE</code>
+                            <code style="color: var(--accent-primary);">READ://FACS</code>
+                            <code style="color: var(--accent-primary);">READ://OBJECT0</code>
+                            <code style="color: var(--accent-primary);">READ://PROJECTANCHOR</code>
+                            <code style="color: var(--accent-primary);">READ://TIMELINE/XM5-34T-GHR56-371</code>
+                            <code style="color: var(--accent-primary);">READ://TIMELINE/HT9-07B-TLA12-891</code>
+                            <code style="color: var(--accent-primary);">READ://TIMELINE/TY2-47H-UHT01-502</code>
+                            <code style="color: var(--text-secondary);">CLEAR</code>
+                            <code style="color: var(--text-secondary);">TIME</code>
+                        </div>
+                    </div>
+                `;
+            } else if (database[command]) {
+                const data = database[command];
+                entry.innerHTML += `
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                ${data.title}
+                                <span class="badge badge-${data.badge}">${data.badge}</span>
+                            </div>
+                        </div>
+                        ${data.content}
+                    </div>
+                `;
+            } else if (command === '') {
+                return;
+            } else {
+                entry.innerHTML += `
+                    <div class="error-message">
+                        <span class="error-icon">⚠</span>
+                        <div>
+                            <div style="font-weight: 600;">Unknown Command</div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">"${command}" is not recognized. Type HELP for available commands.</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            output.appendChild(entry);
+            mainContent.scrollTop = mainContent.scrollHeight;
+        }
 
-            setInterval(() => {
-                if (soundEnabled && audioContext && Math.random() > 0.8 && !isSecurityActive) {
-                    createBeepSound(0.05, 100 + Math.random() * 100, 0.03, 'sine');
-                }
-            }, 5000);
+        // Auto-focus input
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.command-input')) {
+                commandInput.focus();
+            }
         });
     </script>
 </body>
